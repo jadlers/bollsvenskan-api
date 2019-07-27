@@ -190,3 +190,70 @@ app.post("/match", async (req, respond) => {
 
   return respond.json(response);
 });
+
+app.get("/match", async (req, res) => {
+  let response;
+  response = { message: "In development" };
+
+  try {
+    const matches = await db.any("SELECT * FROM matches");
+
+    const final = [];
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+
+      const matchObj = { matchId: match.id, teams: [] };
+
+      // Format the score
+      const { id, score, winning_team_id } = match;
+      const score_arr = score.split("-").map(n => parseInt(n));
+      matchObj.score = score_arr;
+
+      // Get all teams in the match
+      const teamIds = await db.any(
+        "SELECT team_id FROM match_teams WHERE match_id = $1",
+        id
+      );
+
+      const teams = [];
+
+      for (let j = 0; j < teamIds.length; j++) {
+        const row = teamIds[j];
+        // Get names
+        const teamId = row.team_id;
+        const playerNames = await getPlayerNamesFromTeamId(teamId);
+        matchObj.teams.push(playerNames);
+        if (teamId === winning_team_id) {
+          matchObj.winner = matchObj.teams.indexOf(playerNames);
+        }
+      }
+
+      final.push(matchObj);
+    }
+    response = { matches: final };
+  } catch (error) {
+    console.log(error);
+  }
+
+  return res.json(response);
+});
+
+const getPlayerNamesFromTeamId = async teamId => {
+  try {
+    const res = await db.any(
+      "SELECT user_id FROM team_players WHERE team_id = $1",
+      teamId
+    );
+    const userIds = res.map(row => parseInt(row.user_id));
+    let players = [];
+
+    const nameData = await db.query(
+      `SELECT username FROM users WHERE id IN (${userIds.toString()})`
+    ); // TODO: Safe?
+    const names = nameData.map(p => p.username);
+    return names;
+  } catch (error) {
+    console.log(error);
+  }
+  return [];
+};
