@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres:11-alpine
+    restart: always
+    volumes:
+      - ./database/data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: jacob
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: bollsvenskan
+
+  adminer:
+    depends_on:
+      - db
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
