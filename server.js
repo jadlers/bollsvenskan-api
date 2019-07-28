@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const Joi = require("@hapi/joi");
 const pgp = require("pg-promise")();
 
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 const server = app.listen(PORT);
 
@@ -53,7 +55,7 @@ app.post("/player", async (req, res) => {
     console.log({
       eventType: "DB",
       function: "addNewPlayer",
-      message: `Added user ${username} with id ${res.insertId}`,
+      message: `Added user ${username} with id ${res.id}`,
     });
 
     response = {
