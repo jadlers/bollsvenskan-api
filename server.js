@@ -19,10 +19,7 @@ app.get("/player", async (req, res) => {
   try {
     const res = await db.any("SELECT * FROM users");
     response = {
-      statusCode: 200,
-      body: {
-        players: res,
-      },
+      players: res,
     };
   } catch (err) {
     console.log({
@@ -30,7 +27,7 @@ app.get("/player", async (req, res) => {
       function: "getAllPlayers",
       err,
     });
-    res.send(err);
+    return res.status(400).send(err);
   }
 
   res.send(response);
