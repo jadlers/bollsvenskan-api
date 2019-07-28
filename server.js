@@ -158,13 +158,14 @@ app.post("/match", async (req, respond) => {
     const matchId = res.id;
 
     // Dbect match with teams using match_teams
-    await teamIds.forEach(
-      async teamId =>
-        await db.query(
-          "INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2)",
-          [matchId, teamId]
-        )
-    );
+    for (let i = 0; i < teamIds.length; i++) {
+      const teamId = teamIds[i];
+
+      await db.any(
+        "INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2)",
+        [matchId, teamId]
+      );
+    }
 
     db.query("COMMIT");
     console.log({
@@ -192,7 +193,6 @@ app.post("/match", async (req, respond) => {
 
 app.get("/match", async (req, res) => {
   let response;
-  response = { message: "In development" };
 
   try {
     const matches = await db.any("SELECT * FROM matches");
@@ -246,7 +246,7 @@ const getPlayerNamesFromTeamId = async teamId => {
     const userIds = res.map(row => parseInt(row.user_id));
     let players = [];
 
-    const nameData = await db.query(
+    const nameData = await db.any(
       `SELECT username FROM users WHERE id IN (${userIds.toString()})`
     ); // TODO: Safe?
     const names = nameData.map(p => p.username);
