@@ -40,5 +40,5 @@ CREATE TABLE match_teams (
   team_id  INT,
   name     TEXT, -- Optional
   PRIMARY KEY (match_id, team_id),
-  FOREIGN KEY (match_id) REFERENCES matches (id)
+  FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
 );
