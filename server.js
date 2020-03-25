@@ -152,8 +152,8 @@ app.post("/match", async (req, respond) => {
 
     // Add match information
     const res = await db.one(
-      "INSERT INTO matches (score, winning_team_id) VALUES ($1, $2) RETURNING *",
-      [`${score[0]} - ${score[1]}`, teamIds[winner]]
+      "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
+      [`${score[0]} - ${score[1]}`, teamIds[winner], 2]
     );
     const matchId = res.id;
 

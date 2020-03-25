@@ -13,7 +13,7 @@ CREATE TABLE teams (
 );
 
 -- A team table should exists later where name & etc. belong
-DROP TABLE IF EXISTS teams_players;
+DROP TABLE IF EXISTS team_players;
 CREATE TABLE team_players (
   team_id     INT,
   user_id     INT,
@@ -29,7 +29,8 @@ CREATE TABLE matches (
   id               SERIAL       PRIMARY KEY,
   date             TIMESTAMP,
   score            VARCHAR(40),
-  winning_team_id  INT
+  winning_team_id  INT,
+  league_id        INT
 );
 
 DROP TABLE IF EXISTS match_teams;
