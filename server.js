@@ -204,7 +204,14 @@ app.get("/match", async (req, res) => {
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
 
-      const matchObj = { matchId: match.id, teams: [] };
+      const matchObj = {
+        matchId: match.id,
+        teams: [],
+      };
+
+      if (match.dota_match_id) {
+        matchObj.dotaMatchId = match.dota_match_id;
+      }
 
       // Format the score
       const { id, score, winning_team_id } = match;
