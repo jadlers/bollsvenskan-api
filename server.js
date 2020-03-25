@@ -110,6 +110,9 @@ app.post("/match", async (req, respond) => {
     winner: Joi.number()
       .min(0)
       .required(),
+    dota_match_id: Joi.number()
+      .min(0)
+      .required(),
   });
 
   try {
@@ -125,7 +128,7 @@ app.post("/match", async (req, respond) => {
   }
 
   // All data needed is valid
-  const { teams, score, winner } = body;
+  const { teams, score, winner, dota_match_id } = body;
 
   // 2. Add to DB
   try {
@@ -152,8 +155,8 @@ app.post("/match", async (req, respond) => {
 
     // Add match information
     const res = await db.one(
-      "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
-      [`${score[0]} - ${score[1]}`, teamIds[winner], 2]
+      "INSERT INTO matches (score, winning_team_id, league_id, dota_match_id) VALUES ($1, $2, $3, $4) RETURNING *",
+      [`${score[0]} - ${score[1]}`, teamIds[winner], 2, dota_match_id]
     );
     const matchId = res.id;
 

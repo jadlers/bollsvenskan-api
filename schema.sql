@@ -30,7 +30,8 @@ CREATE TABLE matches (
   date             TIMESTAMP,
   score            VARCHAR(40),
   winning_team_id  INT,
-  league_id        INT
+  league_id        INT,
+  dota_match_id    INT
 );
 
 DROP TABLE IF EXISTS match_teams;
