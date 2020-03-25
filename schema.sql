@@ -31,7 +31,7 @@ CREATE TABLE matches (
   score            VARCHAR(40),
   winning_team_id  INT,
   league_id        INT,
-  dota_match_id    INT
+  dota_match_id    VARCHAR
 );
 
 DROP TABLE IF EXISTS match_teams;

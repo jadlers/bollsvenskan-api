@@ -100,30 +100,19 @@ app.post("/match", async (req, respond) => {
   // 1. Validate data needed exists
   const schema = Joi.object().keys({
     teams: Joi.array()
-      .items(
-        Joi.array()
-          .items(Joi.number())
-          .min(1)
-      )
+      .items(Joi.array().items(Joi.number()).min(1))
       .min(2)
       .required(),
-    score: Joi.array()
-      .items(Joi.number())
-      .min(2)
-      .required(),
-    winner: Joi.number()
-      .min(0)
-      .required(),
-    dota_match_id: Joi.number()
-      .min(0)
-      .required(),
+    score: Joi.array().items(Joi.number()).min(2).required(),
+    winner: Joi.number().min(0).required(),
+    dota_match_id: [Joi.number(), Joi.string()],
   });
 
   try {
     await Joi.validate(body, schema, { abortEarly: false });
   } catch (error) {
     const errorInformation = error.details.map(
-      d => d.message.replace(/\"/g, `'`) + " "
+      (d) => d.message.replace(/\"/g, `'`) + " "
     );
 
     return respond.status(400).json({
@@ -219,7 +208,7 @@ app.get("/match", async (req, res) => {
 
       // Format the score
       const { id, score, winning_team_id } = match;
-      const score_arr = score.split("-").map(n => parseInt(n));
+      const score_arr = score.split("-").map((n) => parseInt(n));
       matchObj.score = score_arr;
 
       // Get all teams in the match
@@ -251,19 +240,19 @@ app.get("/match", async (req, res) => {
   return res.json(response);
 });
 
-const getPlayerNamesFromTeamId = async teamId => {
+const getPlayerNamesFromTeamId = async (teamId) => {
   try {
     const res = await db.any(
       "SELECT user_id FROM team_players WHERE team_id = $1",
       teamId
     );
-    const userIds = res.map(row => parseInt(row.user_id));
+    const userIds = res.map((row) => parseInt(row.user_id));
     let players = [];
 
     const nameData = await db.any(
       `SELECT username FROM users WHERE id IN (${userIds.toString()})`
     ); // TODO: Safe?
-    const names = nameData.map(p => p.username);
+    const names = nameData.map((p) => p.username);
     return names;
   } catch (error) {
     console.log(error);
