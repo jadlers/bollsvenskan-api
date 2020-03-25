@@ -14,6 +14,10 @@ app.use(cors());
 
 const server = app.listen(PORT);
 
+app.get("/ping", async (req, res) =>
+  res.status(200).send({ message: "Pong!" })
+);
+
 app.get("/player", async (req, res) => {
   let conn, response;
   try {
