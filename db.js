@@ -4,16 +4,16 @@ const pgp = require("pg-promise")();
 const db = pgp(process.env.DATABASE_URL);
 
 /* TRANSACTIONS */
-exports.startTransaction = async function () {
-  await db.none("START TRANSACTION");
+exports.beginTransaction = async function () {
+  return db.none("BEGIN TRANSACTION");
 };
 
 exports.commitTransaction = async function () {
-  await db.none("COMMIT");
+  return db.none("COMMIT");
 };
 
 exports.rollbackTransaction = async function () {
-  await db.none("ROLLBACK");
+  return db.none("ROLLBACK");
 };
 
 /* USERS */
@@ -81,7 +81,7 @@ exports.addNewMatch = async function (
 ) {
   const row = await db.one(
     "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
-    [`${score[0]} - ${score[1]}`, winningTeamId, leagueId]
+    [score, winningTeamId, leagueId]
   );
   const matchId = row.id;
 

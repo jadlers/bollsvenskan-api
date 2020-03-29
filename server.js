@@ -99,6 +99,8 @@ app.post("/match", async (req, respond) => {
     winner: Joi.number().min(0).required(),
     leagueId: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
+    diedFirstBlood: Joi.number(),
+    coolaStats: Joi.array(),
   });
 
   const { value: verifiedBody, error } = schema.validate(req.body, {
@@ -111,6 +113,7 @@ app.post("/match", async (req, respond) => {
     );
 
     // Bad request, abort and give information about what has to change
+    console.log(`Error in POST to /match:\n${error}`);
     return respond.status(400).json({
       error: `${error.name}: ${errorInformation}`,
     });
@@ -123,7 +126,7 @@ app.post("/match", async (req, respond) => {
   // 2. Add to DB
   try {
     // Start a transaction
-    await db.startTransaction();
+    await db.beginTransaction();
 
     // Add players to teams
     let teamIds = [];
@@ -199,7 +202,7 @@ app.get("/match", async (req, res) => {
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
 
-      const score_arr = match.score.split("-").map((n) => parseInt(n));
+      const scoreArr = match.score.split("-").map((n) => parseInt(n));
 
       // Get all teams in the match
       const teamIds = await db.getTeamsInMatch(match.id);
@@ -220,14 +223,19 @@ app.get("/match", async (req, res) => {
         }
       }
 
-      match.teams = teams;
-
-      final.push({
+      let obj = {
         matchId: match.id,
         teams,
         winner: match.winner,
-        score: score_arr,
-      });
+        score: scoreArr,
+        leagueId: match.league_id,
+      };
+
+      if (match.dota_match_id) {
+        obj.dotaMatchId = match.dota_match_id;
+      }
+
+      final.push(obj);
     }
 
     response = { matches: final };
