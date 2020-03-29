@@ -70,7 +70,7 @@ exports.addTeamToMatch = async function (matchId, teamId) {
 /* MATCHES */
 
 exports.getAllMatches = async function () {
-  return await db.any("SELECT * FROM matches");
+  return await db.any("SELECT * FROM matches WHERE league_id = 2");
 };
 
 exports.addNewMatch = async function (
