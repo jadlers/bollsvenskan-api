@@ -77,7 +77,8 @@ exports.addNewMatch = async function (
   score,
   winningTeamId,
   leagueId,
-  dotaMatchId
+  dotaMatchId,
+  diedFirstBlood
 ) {
   const row = await db.one(
     "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
@@ -92,6 +93,14 @@ exports.addNewMatch = async function (
       matchId,
     ]);
   }
+
+  if (diedFirstBlood) {
+    await db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
+      diedFirstBlood,
+      matchId,
+    ]);
+  }
+
   return matchId;
 };
 
@@ -99,6 +108,23 @@ exports.addUserToTeam = async function (teamId, userId) {
   return await db.one(
     "INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *",
     [teamId, userId]
+  );
+};
+
+exports.addStatsForUserToMatch = async function (matchId, userId, stats) {
+  return await db.one(
+    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9 RETURNING *",
+    [
+      matchId,
+      userId,
+      stats.kills,
+      stats.deaths,
+      stats.assists,
+      stats.obs_placed,
+      stats.observer_kills,
+      stats.sen_placed,
+      stats.sentry_kills,
+    ]
   );
 };
 

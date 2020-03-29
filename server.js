@@ -120,8 +120,20 @@ app.post("/match", async (req, respond) => {
   }
 
   // All data needed is valid
-  const { teams, score, winner, dotaMatchId } = verifiedBody;
+  const {
+    teams,
+    score,
+    winner,
+    dotaMatchId,
+    diedFirstBlood,
+    coolaStats: coolStats,
+  } = verifiedBody;
   const leagueId = verifiedBody.leagueId || 0; // Default to the temporary test league
+
+  // Map stats to players
+  for (let i = 0; i < coolStats.length; i++) {
+    coolStats[i].userId = teams.flat()[i];
+  }
 
   // 2. Add to DB
   try {
@@ -147,13 +159,20 @@ app.post("/match", async (req, respond) => {
       `${score[0]} - ${score[1]}`,
       teamIds[winner],
       leagueId,
-      dotaMatchId
+      dotaMatchId,
+      diedFirstBlood
     );
 
     // Add tams to the newly created match
     for (let i = 0; i < teamIds.length; i++) {
       const teamId = teamIds[i];
       await db.addTeamToMatch(matchId, teamId);
+    }
+
+    // Add "cool" stats
+    for (let i = 0; i < coolStats.length; i++) {
+      const { userId, ...stats } = coolStats[i];
+      await db.addStatsForUserToMatch(matchId, userId, stats);
     }
 
     await db.commitTransaction();
