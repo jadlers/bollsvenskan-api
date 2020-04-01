@@ -138,3 +138,14 @@ exports.addNewTeam = async function () {
   );
   return row.id;
 };
+
+/* LEAGUES */
+exports.deleteAllMatchesFromLeague = async function (leagueId) {
+  const rows = await db.any(
+    "DELETE FROM matches WHERE league_id = $1 RETURNING *",
+    [leagueId]
+  );
+
+  const deletedIds = rows.map((row) => row.id);
+  return deletedIds;
+};

@@ -267,6 +267,28 @@ app.get("/match", async (req, res) => {
 
 /* LEAGUE */
 
+app.delete("/league/:leagueId", async (req, res) => {
+  const protectedLeagues = [1, 2];
+  const leagueId = parseInt(req.params.leagueId);
+
+  if (protectedLeagues.includes(leagueId)) {
+    return res.status(403).json({
+      message: `Leagues: ${protectedLeagues} are protected and cannot be deleted`,
+    });
+  }
+
+  try {
+    const deletedIds = await db.deleteAllMatchesFromLeague(leagueId);
+    return res.status(200).json({
+      message: `Deleted all matches in league: ${leagueId}`,
+      deletedIds: deletedIds,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // TODO Get matches from a single league
 // app.get("/league/:leagueId", async (req, res) => {
 //   const leagueId = req.params.leagueId;
