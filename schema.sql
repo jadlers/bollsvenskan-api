@@ -57,6 +57,7 @@ CREATE TABLE user_match_stats (
        observers_destroyed INT,
        sentries_placed INT,
        sentries_destroyed INT,
+       fantasy_points DOUBLE PRECISION,
        PRIMARY KEY (user_id, match_id),
        FOREIGN KEY (user_id) REFERENCES users (id)
                ON DELETE SET NULL ON UPDATE CASCADE,

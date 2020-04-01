@@ -113,7 +113,7 @@ exports.addUserToTeam = async function (teamId, userId) {
 
 exports.addStatsForUserToMatch = async function (matchId, userId, stats) {
   return await db.one(
-    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9 RETURNING *",
+    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10 RETURNING *",
     [
       matchId,
       userId,
@@ -124,6 +124,7 @@ exports.addStatsForUserToMatch = async function (matchId, userId, stats) {
       stats.observer_kills,
       stats.sen_placed,
       stats.sentry_kills,
+      stats.fantasyPoints,
     ]
   );
 };

@@ -100,7 +100,7 @@ app.post("/match", async (req, respond) => {
     leagueId: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
     diedFirstBlood: Joi.number(),
-    coolaStats: Joi.array(),
+    coolaStats: Joi.array().items(Joi.object()),
   });
 
   const { value: verifiedBody, error } = schema.validate(req.body, {
