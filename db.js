@@ -140,6 +140,11 @@ exports.addNewTeam = async function () {
 };
 
 /* LEAGUES */
+
+exports.getAllMatchesFromLeague = async function (leagueId) {
+  return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
+};
+
 exports.deleteAllMatchesFromLeague = async function (leagueId) {
   const rows = await db.any(
     "DELETE FROM matches WHERE league_id = $1 RETURNING *",

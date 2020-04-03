@@ -215,7 +215,7 @@ app.get("/match", async (req, res) => {
   }
 
   try {
-    const matches = await db.getAllMatches();
+    const matches = await db.getAllMatchesFromLeague(2);
 
     const final = [];
     for (let i = 0; i < matches.length; i++) {
