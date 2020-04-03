@@ -40,6 +40,13 @@ exports.addNewUser = async function (username) {
   return inserted.id;
 };
 
+exports.getUserStatsFromMatch = async function (userId, matchId) {
+  return await db.one(
+    "SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2",
+    [userId, matchId]
+  );
+};
+
 exports.getUsersInTeam = async function (teamId) {
   const rows = await db.any(
     "SELECT user_id FROM team_players WHERE team_id = $1",

@@ -230,15 +230,21 @@ app.get("/match", async (req, res) => {
       for (let j = 0; j < teamIds.length; j++) {
         const teamId = teamIds[j];
         const userIds = await db.getUsersInTeam(teamId);
-        let playerNames = [];
+        let teamPlayers = [];
         for (let k = 0; k < userIds.length; k++) {
-          const name = await db.getNameOfUser(userIds[k]);
-          playerNames.push(name);
+          const userId = userIds[k];
+          const name = await db.getNameOfUser(userId);
+          const {
+            user_id,
+            match_id,
+            ...stats // Destructure to remove user_id and match_id from object
+          } = await db.getUserStatsFromMatch(userId, match.id);
+          teamPlayers.push({ id: userId, name, stats });
         }
-        teams.push(playerNames);
+        teams.push(teamPlayers);
 
         if (teamId === match.winning_team_id) {
-          match.winner = teams.indexOf(playerNames);
+          match.winner = teams.indexOf(teamPlayers);
         }
       }
 
@@ -248,6 +254,7 @@ app.get("/match", async (req, res) => {
         winner: match.winner,
         score: scoreArr,
         leagueId: match.league_id,
+        diedFirstBlood: match.died_first_blood,
       };
 
       if (match.dota_match_id) {
