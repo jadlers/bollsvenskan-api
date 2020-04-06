@@ -296,6 +296,17 @@ app.delete("/league/:leagueId", async (req, res) => {
   }
 });
 
+app.get("/league/:leagueId/last-dota-match-id", async (req, res) => {
+  const leagueId = parseInt(req.params.leagueId);
+  try {
+    const dotaMatchId = await db.getLastDotaMatchIdFromLeague(leagueId);
+    return res.json({ dotaMatchId: dotaMatchId });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: error });
+  }
+});
+
 // TODO Get matches from a single league
 // app.get("/league/:leagueId", async (req, res) => {
 //   const leagueId = req.params.leagueId;

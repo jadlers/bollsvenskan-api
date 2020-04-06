@@ -152,7 +152,22 @@ exports.getAllMatchesFromLeague = async function (leagueId) {
   return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
 };
 
-exports.deleteAllMatchesFromLeague = async function (leagueId) {
+exports.getLastDotaMatchIdFromLeague = async function(leagueId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const rows = await db.any(
+        "SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id",
+        [leagueId]
+      );
+      const matchIds = rows.map(row => parseInt(row.dota_match_id));
+      resolve(Math.max(...matchIds));
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+exports.deleteAllMatchesFromLeague = async function(leagueId) {
   const rows = await db.any(
     "DELETE FROM matches WHERE league_id = $1 RETURNING *",
     [leagueId]
