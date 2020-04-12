@@ -180,8 +180,9 @@ app.post("/match", async (req, respond) => {
       eventType: "DB",
       function: "addNewMatch",
       message: "Added match with information shown in data",
-      data: verifiedBody,
+      // data: JSON.stringify(verifiedBody, null, 2),
     });
+    console.log(JSON.stringify(verifiedBody, null, 2));
 
     return respond.status(200).json({
       message: "Successfully added new match",
