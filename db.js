@@ -1,4 +1,5 @@
-// All communication with the database belongs here
+// All communication with the database belongs here. Should only contain CRUD
+// operation and no logic.
 
 const pgp = require("pg-promise")();
 const db = pgp(process.env.DATABASE_URL);
@@ -17,27 +18,23 @@ exports.rollbackTransaction = async function () {
 };
 
 /* USERS */
-exports.getAllUsers = async function () {
-  return await db.any("SELECT * FROM users");
+exports.getAllUsers = function () {
+  return db.any("SELECT * FROM users");
 };
 
-exports.getNameOfUser = async function (userId) {
-  const { username } = await db.one(
-    "SELECT username FROM users WHERE id = $1",
-    [userId]
-  );
-  return username;
+exports.getUser = function (userId) {
+  return db.one("SELECT * FROM users WHERE id = $1", [userId]);
 };
 
 /**
  * Adds a new player to the database and return its created id.
  */
-exports.addNewUser = async function (username) {
-  const inserted = await db.one(
-    "INSERT INTO users (username) VALUES ($1) RETURNING *",
-    [username]
-  );
-  return inserted.id;
+exports.addNewUser = function (username) {
+  return new Promise((resolve, reject) => {
+    db.one("INSERT INTO users (username) VALUES ($1) RETURNING *", [username])
+      .then((row) => resolve(row.id))
+      .catch((err) => reject(err));
+  });
 };
 
 exports.getUserStatsFromMatch = async function (userId, matchId) {
@@ -152,14 +149,14 @@ exports.getAllMatchesFromLeague = async function (leagueId) {
   return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
 };
 
-exports.getLastDotaMatchIdFromLeague = async function(leagueId) {
+exports.getLastDotaMatchIdFromLeague = async function (leagueId) {
   return new Promise(async (resolve, reject) => {
     try {
       const rows = await db.any(
         "SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id",
         [leagueId]
       );
-      const matchIds = rows.map(row => parseInt(row.dota_match_id));
+      const matchIds = rows.map((row) => parseInt(row.dota_match_id));
       resolve(Math.max(...matchIds));
     } catch (error) {
       reject(error);
@@ -167,7 +164,7 @@ exports.getLastDotaMatchIdFromLeague = async function(leagueId) {
   });
 };
 
-exports.deleteAllMatchesFromLeague = async function(leagueId) {
+exports.deleteAllMatchesFromLeague = async function (leagueId) {
   const rows = await db.any(
     "DELETE FROM matches WHERE league_id = $1 RETURNING *",
     [leagueId]

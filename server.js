@@ -21,10 +21,30 @@ app.get("/ping", async (req, res) =>
 
 /** PLAYERS */
 
+app.get("/player/:playerId", async (req, res) => {
+  const playerId = parseInt(req.params.playerId) || -1;
+  if (playerId === -1) {
+    return res.status(400).json({
+      message: `Invalid player id '${req.params.playerId}'. Should be a number of a user in the database.`,
+    });
+  }
+
+  try {
+    const { id, username, full_name: fullName } = await db.getUser(playerId);
+    return res.status(200).json({ id, username, fullName });
+  } catch (error) {
+    return res.status(500).json({ message: "error" });
+  }
+});
+
 // Get all players
 app.get("/player", async (req, res) => {
   try {
-    const players = await db.getAllUsers();
+    const rows = await db.getAllUsers();
+    const players = rows.map((player) => {
+      const { id, username, password, full_name: fullName } = player;
+      return { id, username, fullName };
+    });
     return res.status(200).json({ players });
   } catch (err) {
     console.log({
@@ -32,7 +52,7 @@ app.get("/player", async (req, res) => {
       function: "getAllUsers",
       err,
     });
-    return res.status(500).send(err);
+    return res.status(500).json({ error: "Database error" });
   }
 });
 
@@ -234,7 +254,7 @@ app.get("/match", async (req, res) => {
         let teamPlayers = [];
         for (let k = 0; k < userIds.length; k++) {
           const userId = userIds[k];
-          const name = await db.getNameOfUser(userId);
+          const { username: name } = await db.getUser(userId);
           const {
             user_id,
             match_id,
