@@ -84,28 +84,35 @@ exports.addNewMatch = async function (
   dotaMatchId,
   diedFirstBlood
 ) {
-  const row = await db.one(
-    "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
-    [score, winningTeamId, leagueId]
-  );
-  const matchId = row.id;
+  return new Promise(async (resolve, reject) => {
+    try {
+      const row = await db.one(
+        "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
+        [score, winningTeamId, leagueId]
+      );
+      const matchId = row.id;
 
-  // Add optional data
-  if (dotaMatchId) {
-    await db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
-      dotaMatchId,
-      matchId,
-    ]);
-  }
+      // Async add optional data
+      const dotaMatchIdPromise = dotaMatchId
+        ? db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
+            dotaMatchId,
+            matchId,
+          ])
+        : Promise.resolve();
 
-  if (diedFirstBlood) {
-    await db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
-      diedFirstBlood,
-      matchId,
-    ]);
-  }
+      const firstBloodPromise = diedFirstBlood
+        ? db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
+            diedFirstBlood,
+            matchId,
+          ])
+        : Promise.resolve();
 
-  return matchId;
+      await Promise.all([dotaMatchIdPromise, firstBloodPromise]);
+      resolve(matchId);
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
 exports.addUserToTeam = async function (teamId, userId) {
