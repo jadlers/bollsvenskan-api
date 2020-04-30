@@ -8,10 +8,14 @@ const {
   POSTGRES_DB,
 } = process.env;
 
+// NOTE: When hosting on heroku they expose a DATABASE_URL to connect to their DB.
+// This check can be removed once the sever is no longer hosted on heroku.
+const dbConnectionString =
+  process.env.DATABASE_URL ||
+  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`;
+
 const pgp = require("pg-promise")();
-const db = pgp(
-  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`
-);
+const db = pgp(dbConnectionString);
 
 /* TRANSACTIONS */
 exports.beginTransaction = async function () {
