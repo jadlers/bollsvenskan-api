@@ -6,7 +6,9 @@
   "license": "MIT",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "fmt:check": "prettier --check *.js",
+    "fmt:run": "prettier --write *.js"
   },
   "dependencies": {
     "@hapi/joi": "^15.1.0",
