@@ -50,7 +50,7 @@ app.get("/player", async (req, res) => {
     console.log({
       eventType: "DB",
       function: "getAllUsers",
-      err,
+      error: JSON.stringify(err),
     });
     return res.status(500).json({ error: "Database error" });
   }
@@ -68,6 +68,10 @@ app.post("/player", async (req, res) => {
   } = schema.validate(req.body);
 
   if (error) {
+    console.log({
+      eventType: "InvalidRequest",
+      error: JSON.stringify(error),
+    });
     return res.status(400).json({ error: error.details[0].message });
   }
 
@@ -200,9 +204,8 @@ app.post("/match", async (req, respond) => {
       eventType: "DB",
       function: "addNewMatch",
       message: "Added match with information shown in data",
-      // data: JSON.stringify(verifiedBody, null, 2),
+      data: JSON.stringify(verifiedBody),
     });
-    console.log(JSON.stringify(verifiedBody, null, 2));
 
     return respond.status(200).json({
       message: "Successfully added new match",
