@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.5'
 
 services:
 
@@ -10,10 +10,7 @@ services:
       - ./database/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
-    environment:
-      POSTGRES_USER: jacob
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: bollsvenskan
+    env_file: .env
 
   adminer:
     depends_on:

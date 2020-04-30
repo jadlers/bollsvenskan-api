@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const Joi = require("@hapi/joi");
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.API_SERVER_PORT;
 
 // Import database functions
 const db = require("./db.js");

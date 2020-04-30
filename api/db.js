@@ -1,8 +1,17 @@
 // All communication with the database belongs here. Should only contain CRUD
 // operation and no logic.
 
+const {
+  POSTGRES_USER,
+  POSTGRES_PASSWORD,
+  POSTGRES_HOST,
+  POSTGRES_DB,
+} = process.env;
+
 const pgp = require("pg-promise")();
-const db = pgp(process.env.DATABASE_URL);
+const db = pgp(
+  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`
+);
 
 /* TRANSACTIONS */
 exports.beginTransaction = async function () {
