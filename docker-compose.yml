@@ -1,6 +1,14 @@
 version: '3.5'
 
 services:
+  api_server:
+    image: bollsvenskan-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:${API_SERVER_PORT}"
+    env_file: .env
 
   db:
     image: postgres:11-alpine
