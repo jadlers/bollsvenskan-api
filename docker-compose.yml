@@ -17,14 +17,41 @@ services:
       - ./database/data:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d
     ports:
-      - 5432:5432
+      - "5432:5432"
     env_file: .env
 
   adminer:
     depends_on:
       - db
     image: adminer
+    restart: on-failure
+    ports:
+      - "8080:8080"
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    volumes:
+      - prometheus-volume:/prometheus
+      - ./prometheus-config:/etc/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    depends_on:
+      - prometheus
+    image: grafana/grafana
     restart: always
     ports:
-      - 8080:8080
+      - "3000:3000"
+    volumes:
+      - grafana-volume:/var/lib/grafana
+    env_file: .env
+
+
+volumes:
+  prometheus-volume:
+    name: bollsvenskan-api-prometheus-volume
+  grafana-volume:
+    name: bollsvenskan-api-grafana-volume
 

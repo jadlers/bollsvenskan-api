@@ -1,0 +1,9 @@
+scrape_configs:
+  - job_name: 'bollsvenskan_api_server'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+    static_configs:
+      # NOTE: Seems like this can't be read from env
+      - targets: ['api_server:5000'] 
