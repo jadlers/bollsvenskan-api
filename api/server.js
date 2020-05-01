@@ -4,60 +4,87 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const Joi = require("@hapi/joi");
 
-const PORT = process.env.API_SERVER_PORT;
+const Prometheus = require("prom-client");
+Prometheus.collectDefaultMetrics();
+
+const httpRequestDurationMicroseconds = new Prometheus.Histogram({
+  name: "http_request_duration_ms",
+  help: "Duration of HTTP requests in ms",
+  labelNames: ["method", "route", "status_code"],
+  buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000],
+});
 
 // Import database functions
 const db = require("./db.js");
 
 const app = express();
+
+// Start monitoring
+app.use((req, res, next) => {
+  res.locals.startEpoch = Date.now();
+  next();
+});
+
+// Add endpoint for metrics
+app.get("/metrics", (req, res) => {
+  res.set("Content-Type", Prometheus.register.contentType);
+  res.end(Prometheus.register.metrics());
+});
+
+// Add other middleware
 app.use(bodyParser.json());
 app.use(cors());
 
-const server = app.listen(PORT);
+const PORT = process.env.API_SERVER_PORT;
 
-app.get("/ping", async (req, res) =>
+app.get("/ping", async (req, res, next) =>
   res.status(200).send({ message: "Pong!" })
 );
 
 /** PLAYERS */
 
-app.get("/player/:playerId", async (req, res) => {
+app.get("/player/:playerId", async (req, res, next) => {
   const playerId = parseInt(req.params.playerId) || -1;
   if (playerId === -1) {
-    return res.status(400).json({
+    res.status(400).json({
       message: `Invalid player id '${req.params.playerId}'. Should be a number of a user in the database.`,
     });
+    next();
   }
 
   try {
     const { id, username, full_name: fullName } = await db.getUser(playerId);
-    return res.status(200).json({ id, username, fullName });
+    res.status(200).json({ id, username, fullName });
+    next();
   } catch (error) {
-    return res.status(500).json({ message: "error" });
+    res.status(500).json({ message: "Database error" });
+    next();
   }
 });
 
 // Get all players
-app.get("/player", async (req, res) => {
+app.get("/player", async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
     const players = rows.map((player) => {
       const { id, username, password, full_name: fullName } = player;
       return { id, username, fullName };
     });
-    return res.status(200).json({ players });
+    res.status(200).json({ players });
+    next();
   } catch (err) {
     console.log({
       eventType: "DB",
       function: "getAllUsers",
       error: JSON.stringify(err),
     });
-    return res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
+    next();
   }
 });
 
 // Add new player
-app.post("/player", async (req, res) => {
+app.post("/player", async (req, res, next) => {
   const schema = Joi.object().keys({
     username: Joi.string().required(),
   });
@@ -72,7 +99,8 @@ app.post("/player", async (req, res) => {
       eventType: "InvalidRequest",
       error: JSON.stringify(error),
     });
-    return res.status(400).json({ error: error.details[0].message });
+    res.status(400).json({ error: error.details[0].message });
+    next();
   }
 
   try {
@@ -84,10 +112,11 @@ app.post("/player", async (req, res) => {
       message: `Added user ${username} with id ${userId}`,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "User added successfully",
       userId: userId,
     });
+    next();
   } catch (err) {
     if (err.code === "23505") {
       console.log({
@@ -95,16 +124,16 @@ app.post("/player", async (req, res) => {
         function: "addNewUser",
         message: `Error: User with username '${username}' already exists`,
       });
-      return res
-        .status(400)
-        .json({ message: `A user with that name already exists` });
+      res.status(400).json({ message: `A user with that name already exists` });
+      next();
     } else {
       console.log({
         eventType: "DB",
         function: "addNewUser",
         err,
       });
-      return res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error" });
+      next();
     }
   }
 });
@@ -112,7 +141,7 @@ app.post("/player", async (req, res) => {
 /** MATCHES */
 
 // Add new match
-app.post("/match", async (req, respond) => {
+app.post("/match", async (req, res, next) => {
   // 1. Validate data needed exists
   const schema = Joi.object().keys({
     teams: Joi.array()
@@ -138,9 +167,10 @@ app.post("/match", async (req, respond) => {
 
     // Bad request, abort and give information about what has to change
     console.log(`Error in POST to /match:\n${error}`);
-    return respond.status(400).json({
+    res.status(400).json({
       error: `${error.name}: ${errorInformation}`,
     });
+    next();
   }
 
   // All data needed is valid
@@ -207,25 +237,23 @@ app.post("/match", async (req, respond) => {
       data: JSON.stringify(verifiedBody),
     });
 
-    return respond.status(200).json({
+    res.status(200).json({
       message: "Successfully added new match",
     });
+    next();
   } catch (error) {
     await db.rollbackTransaction();
     console.log(error);
-    return respond
-      .status(500)
-      .json({ message: "Internal error adding new match" });
+    res.status(500).json({ message: "Internal error adding new match" });
+    next();
   }
-
-  return respond.json(response);
 });
 
 // TODO: Return a single match
-// app.get("/match/:matchId", async (req, res) => {
+// app.get("/match/:matchId", async (req, res, next) => {
 
 // Return all matches
-app.get("/match", async (req, res) => {
+app.get("/match", async (req, res, next) => {
   let response;
 
   const schema = Joi.object().keys({ leagueId: Joi.number().min(0) });
@@ -235,7 +263,8 @@ app.get("/match", async (req, res) => {
     const errorInformation = error.details.map(
       (d) => d.message.replace(/\"/g, `'`) + " "
     );
-    return res.status(400).json({ error: errorInformation });
+    res.status(400).json({ error: errorInformation });
+    next();
   }
 
   try {
@@ -289,50 +318,71 @@ app.get("/match", async (req, res) => {
     }
 
     response = { matches: final };
+    res.status(200).json(response);
+    next();
   } catch (error) {
     console.log(error);
+    res.status(500).json({ error: "Database error" });
+    next();
   }
-
-  return res.json(response);
 });
 
 /* LEAGUE */
 
-app.delete("/league/:leagueId", async (req, res) => {
+app.delete("/league/:leagueId", async (req, res, next) => {
   const protectedLeagues = [1, 2];
   const leagueId = parseInt(req.params.leagueId);
 
   if (protectedLeagues.includes(leagueId)) {
-    return res.status(403).json({
+    res.status(403).json({
       message: `Leagues: ${protectedLeagues} are protected and cannot be deleted`,
     });
+    next();
   }
 
   try {
     const deletedIds = await db.deleteAllMatchesFromLeague(leagueId);
-    return res.status(200).json({
+    res.status(200).json({
       message: `Deleted all matches in league: ${leagueId}`,
       deletedIds: deletedIds,
     });
+    next();
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
+    next();
   }
 });
 
-app.get("/league/:leagueId/last-dota-match-id", async (req, res) => {
+app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
   const leagueId = parseInt(req.params.leagueId);
   try {
     const dotaMatchId = await db.getLastDotaMatchIdFromLeague(leagueId);
-    return res.json({ dotaMatchId: dotaMatchId });
+    res.status(200).json({ dotaMatchId: dotaMatchId });
+    next();
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: error });
+    res.status(500).json({ message: "Database error" });
+    next();
   }
 });
 
+// Register time taken for request before responding
+app.use((req, res, next) => {
+  const responseTimeInMs = Date.now() - res.locals.startEpoch;
+  httpRequestDurationMicroseconds
+    .labels(req.method, req.path, res.statusCode)
+    .observe(responseTimeInMs);
+
+  next();
+});
+
+const server = app.listen(PORT, () =>
+  console.log(`Server started on port: ${PORT}`)
+);
+
 // TODO Get matches from a single league
-// app.get("/league/:leagueId", async (req, res) => {
+// app.get("/league/:leagueId", async (req, res, next) => {
 //   const leagueId = req.params.leagueId;
 //   console.log(leagueId);
 
