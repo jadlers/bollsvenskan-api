@@ -375,8 +375,11 @@ app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
 });
 
 // Respond 404 for routes not specified
-app.use(function (req, res, next) {
-  res.status(404).send("Sorry can't find that!");
+app.use((req, res, next) => {
+  if (!res.headersSent) {
+    res.status(404).send("Sorry can't find that!");
+  }
+
   next();
 });
 
