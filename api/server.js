@@ -14,6 +14,12 @@ const httpRequestDurationMicroseconds = new Prometheus.Histogram({
   buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000],
 });
 
+const httpRequestTotal = new Prometheus.Counter({
+  name: "http_request_total",
+  help: "Number of HTTP requests processed",
+  labelNames: ["method", "route", "status_code"],
+});
+
 // Import database functions
 const db = require("./db.js");
 
@@ -373,6 +379,8 @@ app.use((req, res, next) => {
   httpRequestDurationMicroseconds
     .labels(req.method, req.path, res.statusCode)
     .observe(responseTimeInMs);
+
+  httpRequestTotal.labels(req.method, req.path, res.statusCode).inc();
 
   next();
 });
