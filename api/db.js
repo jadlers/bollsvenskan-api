@@ -105,22 +105,21 @@ exports.addNewMatch = async function (
       );
       const matchId = row.id;
 
-      // Async add optional data
-      const dotaMatchIdPromise = dotaMatchId
-        ? db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
-            dotaMatchId,
-            matchId,
-          ])
-        : Promise.resolve();
+      // Add optional data
+      if (dotaMatchId) {
+        await db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
+          dotaMatchId,
+          matchId,
+        ]);
+      }
 
-      const firstBloodPromise = diedFirstBlood
-        ? db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
-            diedFirstBlood,
-            matchId,
-          ])
-        : Promise.resolve();
+      if (diedFirstBlood) {
+        await db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
+          diedFirstBlood,
+          matchId,
+        ]);
+      }
 
-      await Promise.all([dotaMatchIdPromise, firstBloodPromise]);
       resolve(matchId);
     } catch (error) {
       reject(error);
