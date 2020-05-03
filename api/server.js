@@ -43,9 +43,10 @@ app.use(cors());
 
 const PORT = process.env.API_SERVER_PORT;
 
-app.get("/ping", async (req, res, next) =>
-  res.status(200).send({ message: "Pong!" })
-);
+app.get("/ping", async (req, res, next) => {
+  res.status(200).json({ message: "Pong!" });
+  next();
+});
 
 /** PLAYERS */
 
