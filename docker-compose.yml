@@ -2,6 +2,8 @@ version: '3.5'
 
 services:
   api_server:
+    depends_on:
+      - db
     image: bollsvenskan-api
     build:
       context: ./api
