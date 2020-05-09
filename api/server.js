@@ -25,6 +25,11 @@ const db = require("./db.js");
 
 const app = express();
 
+// Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
+app.get("/devops", async (req, res, next) => {
+  res.redirect("https://bollsvenskan.jacobadlers.com/devops");
+});
+
 // Start monitoring
 app.use((req, res, next) => {
   res.locals.startEpoch = Date.now();
