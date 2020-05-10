@@ -39,6 +39,20 @@ exports.getUser = function (userId) {
   return db.one("SELECT * FROM users WHERE id = $1", [userId]);
 };
 
+exports.setUserEloRating = function (userId, newRating) {
+  return db.any("UPDATE users SET elo_rating = $2 WHERE id = $1", [
+    userId,
+    newRating,
+  ]);
+};
+
+exports.getNumberOfMatchesInLeague = function (userId, leagueId) {
+  return db.one(
+    "SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1",
+    [userId, leagueId]
+  );
+};
+
 /**
  * Adds a new player to the database and return its created id.
  */
@@ -134,9 +148,14 @@ exports.addUserToTeam = async function (teamId, userId) {
   );
 };
 
-exports.addStatsForUserToMatch = async function (matchId, userId, stats) {
+exports.addStatsForUserToMatch = async function (
+  matchId,
+  userId,
+  eloRating,
+  stats
+) {
   return await db.one(
-    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10 RETURNING *",
+    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points, elo_rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10, elo_rating = $11 RETURNING *",
     [
       matchId,
       userId,
@@ -148,6 +167,7 @@ exports.addStatsForUserToMatch = async function (matchId, userId, stats) {
       stats.sen_placed,
       stats.sentry_kills,
       stats.fantasyPoints,
+      eloRating,
     ]
   );
 };

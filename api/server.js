@@ -20,8 +20,9 @@ const httpRequestTotal = new Prometheus.Counter({
   labelNames: ["method", "route", "status_code"],
 });
 
-// Import database functions
+// Import functions
 const db = require("./db.js");
+const elo = require("./elo.js");
 
 const app = express();
 
@@ -65,8 +66,13 @@ app.get("/player/:playerId", async (req, res, next) => {
   }
 
   try {
-    const { id, username, full_name: fullName } = await db.getUser(playerId);
-    res.status(200).json({ id, username, fullName });
+    const {
+      id,
+      username,
+      full_name: fullName,
+      elo_rating: eloRating,
+    } = await db.getUser(playerId);
+    res.status(200).json({ id, username, fullName, eloRating });
     next();
   } catch (error) {
     res.status(500).json({ message: "Database error" });
@@ -79,8 +85,14 @@ app.get("/player", async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
     const players = rows.map((player) => {
-      const { id, username, password, full_name: fullName } = player;
-      return { id, username, fullName };
+      const {
+        id,
+        username,
+        password,
+        full_name: fullName,
+        elo_rating: eloRating,
+      } = player;
+      return { id, username, fullName, eloRating };
     });
     res.status(200).json({ players });
     next();
@@ -201,6 +213,22 @@ app.post("/match", async (req, res, next) => {
     coolStats[i].userId = teams.flat()[i];
   }
 
+  const playersInMatchPromise = new Promise(async (resolve, reject) => {
+    try {
+      const userIds = teams.flat();
+      const userInfoPromises = userIds.map(async (userId) => {
+        const { username, elo_rating: eloRating } = await db.getUser(userId);
+        return { userId, username, eloRating };
+      });
+
+      const userInfo = await Promise.all(userInfoPromises);
+      resolve(userInfo);
+    } catch (err) {
+      console.log(err);
+      reject([]);
+    }
+  });
+
   // 2. Add to DB
   try {
     // Start a transaction
@@ -235,10 +263,56 @@ app.post("/match", async (req, res, next) => {
       await db.addTeamToMatch(matchId, teamId);
     }
 
+    let playersInMatch = await playersInMatchPromise;
+
     // Add "cool" stats
     for (let i = 0; i < coolStats.length; i++) {
       const { userId, ...stats } = coolStats[i];
-      await db.addStatsForUserToMatch(matchId, userId, stats);
+      const userInfo = playersInMatch.find(
+        (player) => player.userId === userId
+      );
+      await db.addStatsForUserToMatch(
+        matchId,
+        userId,
+        userInfo.eloRating,
+        stats
+      );
+    }
+
+    // Update each players elo rating
+    // 1. Get team average rating
+    const teamRatings = teams.map((team) => {
+      const ratings = playersInMatch.filter((player) =>
+        team.includes(player.userId)
+      );
+      const sumRating = ratings.reduce((acc, cur) => acc + cur.eloRating, 0);
+      return sumRating / ratings.length;
+    });
+
+    // 2. Get number of matches for each player
+    for (let i = 0; i < playersInMatch.length; i++) {
+      const { count: numMatches } = await db.getNumberOfMatchesInLeague(
+        playersInMatch[i].userId,
+        leagueId
+      );
+      playersInMatch[i].numberOfGamesPlayed = parseInt(numMatches);
+    }
+
+    for (let teamIdx = 0; teamIdx < teams.length; teamIdx++) {
+      const team = teams[teamIdx];
+      for (let userIdx = 0; userIdx < team.length; userIdx++) {
+        const player = playersInMatch.find((p) => p.userId === team[userIdx]);
+        // 3. Calculate new rating for each player
+        const newRatingChange = elo.ratingDiff(
+          teamRatings[teamIdx],
+          teamRatings[teamIdx === 0 ? 1 : 0],
+          teamIdx === winner ? true : false,
+          player.numberOfGamesPlayed
+        );
+        const newRating = Math.round(player.eloRating + newRatingChange);
+        // 4. Update DB with new rating
+        await db.setUserEloRating(player.userId, newRating);
+      }
     }
 
     await db.commitTransaction();
