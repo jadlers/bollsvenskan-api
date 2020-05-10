@@ -3,7 +3,8 @@ CREATE TABLE users (
   id         SERIAL         PRIMARY KEY,
   full_name  VARCHAR(80),
   username   VARCHAR(50)    NOT NULL        UNIQUE,
-  password   VARCHAR(140)
+  password   VARCHAR(140),
+  elo_rating INT            DEFAULT 1500 -- Current rating
 );
 
 -- DROP TABLE IF EXISTS teams;
@@ -50,6 +51,7 @@ CREATE TABLE match_teams (
 CREATE TABLE user_match_stats (
        user_id INT,
        match_id INT,
+       elo_rating INT, -- Rating at the time of playing the match
        kills INT,
        deaths INT,
        assists INT,
