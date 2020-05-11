@@ -83,12 +83,20 @@ exports.getUsersInTeam = async function (teamId) {
 
 // Returns the ids of the teams which are in the given match
 exports.getTeamsInMatch = async function (matchId) {
-  const data = await db.many(
-    "SELECT team_id FROM match_teams WHERE match_id = $1",
-    matchId
-  );
+  return new Promise(async (resolve, reject) => {
+    try {
+      const data = await db.many(
+        "SELECT team_id FROM match_teams WHERE match_id = $1",
+        matchId
+      );
 
-  return data.map((m) => m.team_id);
+      const teamIds = data.map((m) => m.team_id);
+      resolve(teamIds);
+    } catch (error) {
+      console.log(error);
+      reject([]);
+    }
+  });
 };
 
 exports.addTeamToMatch = async function (matchId, teamId) {
