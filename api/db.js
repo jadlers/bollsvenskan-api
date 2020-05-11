@@ -180,6 +180,13 @@ exports.addStatsForUserToMatch = async function (
   );
 };
 
+exports.setUserEloRatingForMatch = async function (matchId, userId, eloRating) {
+  return db.any(
+    "UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2",
+    [matchId, userId, eloRating]
+  );
+};
+
 /* TEAMS */
 
 // Add new team without name and return its id
