@@ -527,31 +527,28 @@ async function recalculateEloRatingForAllPlayers() {
         team.averageEloRating = totalRating / team.playerIds.length;
       });
 
-      let updateUserEloPromises = [];
-      teams.forEach((team) => {
-        // Find out which players are in the winning team
-        const winner = team.id === match.winning_team_id;
-        // Calculate diff for each player
-        team.playerIds.forEach((playerId) => {
-          const currentPlayerInfo = playerData.find(
-            (player) => player.id === playerId
-          );
-          const eloRatingDiff = elo.ratingDiff(
-            team.averageEloRating,
-            teams.filter((t) => t.id !== team.id)[0].averageEloRating,
-            winner,
-            currentPlayerInfo.matchesPlayed
-          );
-          currentPlayerInfo.eloRating += Math.round(eloRatingDiff);
-          currentPlayerInfo.matchesPlayed++;
-          updateUserEloPromises.push(
-            db.setUserEloRating(playerId, currentPlayerInfo.eloRating)
-          );
-        });
-      });
-
       // DB: Update the ELO for each player in the match
-      await Promise.all(updateUserEloPromises);
+      await Promise.all(
+        teams.map(async (team) => {
+          // Find out which players are in the winning team
+          const winner = team.id === match.winning_team_id;
+          // Calculate diff for each player
+          team.playerIds.forEach(async (playerId) => {
+            const currentPlayerInfo = playerData.find(
+              (player) => player.id === playerId
+            );
+            const eloRatingDiff = elo.ratingDiff(
+              team.averageEloRating,
+              teams.filter((t) => t.id !== team.id)[0].averageEloRating,
+              winner,
+              currentPlayerInfo.matchesPlayed
+            );
+            currentPlayerInfo.eloRating += Math.round(eloRatingDiff);
+            currentPlayerInfo.matchesPlayed++;
+            await db.setUserEloRating(playerId, currentPlayerInfo.eloRating);
+          });
+        })
+      );
     }
 
     // Log all users with updated eloRating
