@@ -64,8 +64,8 @@ exports.addNewUser = function (username) {
   });
 };
 
-exports.getUserStatsFromMatch = async function (userId, matchId) {
-  return await db.one(
+exports.getUserStatsFromMatch = function (userId, matchId) {
+  return db.one(
     "SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2",
     [userId, matchId]
   );
