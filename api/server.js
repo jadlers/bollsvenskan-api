@@ -355,10 +355,6 @@ app.get("/match", async (req, res, next) => {
 
   try {
     const matches = await db.getAllMatchesFromLeague(2);
-    matches.forEach((match) => {
-      match.dota_match_id = parseInt(match.dota_match_id);
-    });
-    matches.sort((a, b) => a.dota_match_id - b.dota_match_id);
 
     const final = [];
     for (let i = 0; i < matches.length; i++) {
