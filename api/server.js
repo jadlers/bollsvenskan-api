@@ -408,6 +408,10 @@ app.get("/match", async (req, res, next) => {
       final.push(obj);
     }
 
+    if (Object.keys(final[0]).includes("dotaMatchId")) {
+      final.sort((a, b) => a.dotaMatchId - b.dotaMatchId);
+    }
+
     response = { matches: final };
     res.status(200).json(response);
     next();
