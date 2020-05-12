@@ -512,15 +512,6 @@ async function recalculateEloRatingForAllPlayers() {
 
       const playersIdsInMatch = teams.map((team) => team.playerIds).flat();
 
-      // DB: Add players current ELO to match in user_match_stats
-      await Promise.all(
-        playersIdsInMatch.map((playerId) => {
-          const currentElo = playerData.find((player) => player.id === playerId)
-            .eloRating;
-          return db.setUserEloRatingForMatch(match.id, playerId, currentElo);
-        })
-      );
-
       // Calculate both teams average ELO (ELO for each player in the team)
       teams.forEach((team) => {
         const totalRating = team.playerIds.reduce((acc, playerId) => {
@@ -552,6 +543,15 @@ async function recalculateEloRatingForAllPlayers() {
             currentPlayerInfo.matchesPlayed++;
             await db.setUserEloRating(playerId, currentPlayerInfo.eloRating);
           });
+        })
+      );
+
+      // DB: Add players current ELO to match in user_match_stats
+      await Promise.all(
+        playersIdsInMatch.map((playerId) => {
+          const currentElo = playerData.find((player) => player.id === playerId)
+            .eloRating;
+          return db.setUserEloRatingForMatch(match.id, playerId, currentElo);
         })
       );
     }
