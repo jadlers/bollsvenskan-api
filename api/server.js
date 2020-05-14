@@ -458,6 +458,48 @@ app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
   }
 });
 
+app.post("/league/:leagueId/create-teams", async (req, res, next) => {
+  const schema = Joi.object().keys({
+    players: Joi.array().items(Joi.number()).min(2).required(),
+  });
+  const {
+    value: { players: playerIds },
+    error,
+  } = schema.validate(req.body);
+
+  if (error) {
+    console.log(
+      `Error in body of POST request to ${req.originalUrl}`,
+      req.body
+    );
+    res.status(400).json({ error: error.details[0].message });
+    next();
+  }
+
+  try {
+    // Get name and rating for each player
+    let players = await Promise.all(
+      playerIds.map((playerId) => db.getUser(playerId))
+    );
+    players = players.map((player) => {
+      return {
+        id: player.id,
+        name: player.username,
+        rating: player.elo_rating,
+      };
+    });
+
+    // Create balanced teams
+    const teams = elo.createBalancedTeams(players);
+
+    res.status(200).json({ team1: teams[0], team2: teams[1] });
+    next();
+  } catch (err) {
+    console.log(err);
+    res.status(500).send();
+  }
+});
+
 // NOTE: Careful, this should be locked and only available for admins
 app.get("/recalculate-elo-for-all-players", async (req, res, next) => {
   try {

@@ -54,7 +54,7 @@ function createBalancedTeams(players) {
   const teamSize = players.length / 2;
   const teams = players.reduce(
     (acc, curPlayer, idx) => {
-      console.log(`acc at idx=${idx}: `, acc);
+      // console.log(`acc at idx=${idx}: `, acc);
       // If any team is full add the rest of the player to the other team
       if (acc[0].players.length === teamSize) {
         acc[1] = addPlayerToTeam(curPlayer, acc[1]);
