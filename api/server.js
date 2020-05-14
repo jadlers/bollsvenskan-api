@@ -474,6 +474,7 @@ app.post("/league/:leagueId/create-teams", async (req, res, next) => {
     );
     res.status(400).json({ error: error.details[0].message });
     next();
+    return;
   }
 
   try {

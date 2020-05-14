@@ -56,9 +56,9 @@ function createBalancedTeams(players) {
     (acc, curPlayer, idx) => {
       // console.log(`acc at idx=${idx}: `, acc);
       // If any team is full add the rest of the player to the other team
-      if (acc[0].players.length === teamSize) {
+      if (acc[0].players.length >= teamSize) {
         acc[1] = addPlayerToTeam(curPlayer, acc[1]);
-      } else if (acc[1].players.length === teamSize) {
+      } else if (acc[1].players.length >= teamSize) {
         acc[0] = addPlayerToTeam(curPlayer, acc[0]);
 
         // Add to the team with the lowest team rating
