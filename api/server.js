@@ -24,7 +24,8 @@ const httpRequestTotal = new Prometheus.Counter({
 const db = require("./db.js");
 const elo = require("./elo.js");
 
-const app = express();
+const expressWs = require("express-ws")(express());
+const app = expressWs.app;
 
 // Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
 app.get("/devops", async (req, res, next) => {
@@ -500,6 +501,104 @@ app.post("/league/:leagueId/create-teams", async (req, res, next) => {
     res.status(500).send();
   }
 });
+
+// Connection which will broadcast the teams one player at a time
+app.ws("/teams", (ws, req) => {
+  const clients = expressWs.getWss("/teams").clients;
+
+  // Handle connections
+  console.log(
+    `New client connected to ${req.path}, now ${clients.size} connected client(s)`
+  );
+  // ws.send(JSON.stringify({ data: "Welcome" })); // Will be send to new client only
+  ws.on("close", () =>
+    console.log(
+      `Client closed connection, new ${clients.size} connected client(s)`
+    )
+  );
+
+  // Receiving messages (assuming all messages sent are JSON)
+  ws.on("message", (msg) => {
+    // Parse message and inform sender if it's not JSON
+    try {
+      msg = JSON.parse(msg);
+    } catch (error) {
+      ws.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Messages sent have to be JSON",
+        })
+      );
+      return;
+    }
+
+    // Check if message which we're waiting for with teams
+    if (msg.type === "BROADCAST_TEAMS") {
+      console.log("Slowly revealing following teams: ", msg.teams);
+      sendTeamsWithTension(clients, msg.teams);
+    } else {
+      // Broadcast all other messages sent
+      clients.forEach((client) =>
+        client.send(JSON.stringify({ title: `Broadcasting:`, message: msg }))
+      );
+    }
+  });
+});
+
+/**
+ * One player at a time will be moved from the `playersLeft` array to it's team.
+ * Some timeout between each sent player.
+ *
+ * @param {WebSocket[]} clients Connected clients
+ * @param {Object} finalTeams Teams to be revealed
+ */
+function sendTeamsWithTension(clients, finalTeams) {
+  const timeout = 2000;
+  // The JSON object updated and sent
+  let broadcast = {
+    type: "BROADCAST_TEAM_PLAYERS_ONE_BY_ONE",
+    team1: {
+      players: [],
+      numPlayers: finalTeams.team1.players.length,
+      avgElo: null,
+    },
+    team2: {
+      players: [],
+      numPlayers: finalTeams.team2.players.length,
+      avgElo: null,
+    },
+    playersLeft: shuffle(
+      Object.entries(finalTeams)
+        .map(([_, team]) => team.players)
+        .flat()
+    ),
+  };
+
+  const intervalId = setInterval(() => {
+    if (broadcast.playersLeft.length === 0) {
+      clearInterval(intervalId);
+      return;
+    }
+
+    const [nextPlayer, ...remaining] = broadcast.playersLeft;
+    const playerTeam = finalTeams.team1.players.includes(nextPlayer)
+      ? "team1"
+      : "team2";
+    broadcast[playerTeam].players = [
+      ...broadcast[playerTeam].players,
+      nextPlayer,
+    ];
+    broadcast.playersLeft = remaining;
+
+    // Reveal ELO rating when last player has been assign a team
+    if (remaining.length === 0) {
+      broadcast.team1.avgElo = finalTeams.team1.rating;
+      broadcast.team2.avgElo = finalTeams.team2.rating;
+    }
+
+    clients.forEach((client) => client.send(JSON.stringify(broadcast)));
+  }, timeout);
+}
 
 // Taken from here: https://bost.ocks.org/mike/shuffle/
 function shuffle(array) {
