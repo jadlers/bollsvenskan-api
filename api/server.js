@@ -24,8 +24,20 @@ const httpRequestTotal = new Prometheus.Counter({
 const db = require("./db.js");
 const elo = require("./elo.js");
 
-const expressWs = require("express-ws")(express());
-const app = expressWs.app;
+let app = express();
+let expressWs;
+if (process.env.NODE_ENV === "development") {
+  console.log("Development build");
+  expressWs = require("express-ws")(app);
+} else {
+  let fs = require("fs");
+  const options = {
+    key: fs.readFileSync(process.env.KEY_FILE),
+    cert: fs.readFileSync(process.env.CERT_FILE),
+  };
+  let server = require("https").createServer(options, app);
+  expressWs = require("express-ws")(app, server);
+}
 
 // Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
 app.get("/devops", async (req, res, next) => {
