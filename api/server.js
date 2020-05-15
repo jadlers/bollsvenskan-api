@@ -560,12 +560,12 @@ function sendTeamsWithTension(clients, finalTeams) {
     team1: {
       players: [],
       numPlayers: finalTeams.team1.players.length,
-      avgElo: null,
+      rating: null,
     },
     team2: {
       players: [],
       numPlayers: finalTeams.team2.players.length,
-      avgElo: null,
+      rating: null,
     },
     playersLeft: shuffle(
       Object.entries(finalTeams)
@@ -592,8 +592,8 @@ function sendTeamsWithTension(clients, finalTeams) {
 
     // Reveal ELO rating when last player has been assign a team
     if (remaining.length === 0) {
-      broadcast.team1.avgElo = finalTeams.team1.rating;
-      broadcast.team2.avgElo = finalTeams.team2.rating;
+      broadcast.team1.rating = finalTeams.team1.rating;
+      broadcast.team2.rating = finalTeams.team2.rating;
     }
 
     clients.forEach((client) => client.send(JSON.stringify(broadcast)));
