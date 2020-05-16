@@ -6,6 +6,11 @@ const Joi = require("@hapi/joi");
 const socketIo = require("socket.io");
 
 const app = express();
+
+// Add middleware
+app.use(cors());
+app.use(bodyParser.json());
+
 let server;
 if (process.env.NODE_ENV === "development") {
   console.log("Development build");
@@ -18,12 +23,12 @@ if (process.env.NODE_ENV === "development") {
     key: fs.readFileSync(process.env.KEY_FILE),
     cert: fs.readFileSync(process.env.CERT_FILE),
   };
-  server = require("https").createServer(options, app);
+  // TODO: Look over this (http(s)). Temporary solution?
+  server = require("http").createServer(options, app);
 }
 
 // WebSocket action
 const io = socketIo(server);
-console.log(io);
 io.on("connection", (socket) => {
   console.log(`New client connected`);
 
@@ -93,10 +98,6 @@ app.get("/metrics", (req, res) => {
   res.set("Content-Type", Prometheus.register.contentType);
   res.end(Prometheus.register.metrics());
 });
-
-// Add other middleware
-app.use(bodyParser.json());
-app.use(cors());
 
 const PORT = process.env.API_SERVER_PORT;
 
