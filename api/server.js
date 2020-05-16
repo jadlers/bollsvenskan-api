@@ -3,7 +3,60 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const Joi = require("@hapi/joi");
+const socketIo = require("socket.io");
 
+const app = express();
+let server;
+if (process.env.NODE_ENV === "development") {
+  console.log("Development build");
+  const http = require("http");
+  server = http.createServer(app);
+} else {
+  console.log("Production build");
+  let fs = require("fs");
+  const options = {
+    key: fs.readFileSync(process.env.KEY_FILE),
+    cert: fs.readFileSync(process.env.CERT_FILE),
+  };
+  server = require("https").createServer(options, app);
+}
+
+// WebSocket action
+const io = socketIo(server);
+console.log(io);
+io.on("connection", (socket) => {
+  console.log(`New client connected`);
+
+  socket.on("message", (msg) => {
+    // Parse message and inform sender if it's not JSON
+    try {
+      msg = JSON.parse(msg);
+    } catch (error) {
+      socket.send(
+        JSON.stringify({
+          type: "ERROR",
+          message: "Messages sent have to be JSON",
+        })
+      );
+      return;
+    }
+
+    // Check if message which we're waiting for with teams
+    if (msg.type === "BROADCAST_TEAMS") {
+      console.log("Slowly revealing following teams: ", msg.teams);
+      sendTeamsWithTension(msg.teams); // Should still function
+    } else {
+      // Broadcast all other messages sent
+      socket.send(JSON.stringify({ title: `Broadcasting:`, message: msg }));
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`Client closed connection, ${`???`} connected client(s)`);
+  });
+});
+
+// Monitoring
 const Prometheus = require("prom-client");
 Prometheus.collectDefaultMetrics();
 
@@ -23,21 +76,6 @@ const httpRequestTotal = new Prometheus.Counter({
 // Import functions
 const db = require("./db.js");
 const elo = require("./elo.js");
-
-let app = express();
-let expressWs;
-if (process.env.NODE_ENV === "development") {
-  console.log("Development build");
-  expressWs = require("express-ws")(app);
-} else {
-  let fs = require("fs");
-  const options = {
-    key: fs.readFileSync(process.env.KEY_FILE),
-    cert: fs.readFileSync(process.env.CERT_FILE),
-  };
-  let server = require("https").createServer(options, app);
-  expressWs = require("express-ws")(app, server);
-}
 
 // Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
 app.get("/devops", async (req, res, next) => {
@@ -514,57 +552,13 @@ app.post("/league/:leagueId/create-teams", async (req, res, next) => {
   }
 });
 
-// Connection which will broadcast the teams one player at a time
-app.ws("/teams", (ws, req) => {
-  const clients = expressWs.getWss("/teams").clients;
-
-  // Handle connections
-  console.log(
-    `New client connected to ${req.path}, now ${clients.size} connected client(s)`
-  );
-  // ws.send(JSON.stringify({ data: "Welcome" })); // Will be send to new client only
-  ws.on("close", () =>
-    console.log(
-      `Client closed connection, new ${clients.size} connected client(s)`
-    )
-  );
-
-  // Receiving messages (assuming all messages sent are JSON)
-  ws.on("message", (msg) => {
-    // Parse message and inform sender if it's not JSON
-    try {
-      msg = JSON.parse(msg);
-    } catch (error) {
-      ws.send(
-        JSON.stringify({
-          type: "ERROR",
-          message: "Messages sent have to be JSON",
-        })
-      );
-      return;
-    }
-
-    // Check if message which we're waiting for with teams
-    if (msg.type === "BROADCAST_TEAMS") {
-      console.log("Slowly revealing following teams: ", msg.teams);
-      sendTeamsWithTension(clients, msg.teams);
-    } else {
-      // Broadcast all other messages sent
-      clients.forEach((client) =>
-        client.send(JSON.stringify({ title: `Broadcasting:`, message: msg }))
-      );
-    }
-  });
-});
-
 /**
  * One player at a time will be moved from the `playersLeft` array to it's team.
  * Some timeout between each sent player.
  *
- * @param {WebSocket[]} clients Connected clients
  * @param {Object} finalTeams Teams to be revealed
  */
-function sendTeamsWithTension(clients, finalTeams) {
+function sendTeamsWithTension(finalTeams) {
   const timeout = 2000;
   // The JSON object updated and sent
   let broadcast = {
@@ -608,7 +602,8 @@ function sendTeamsWithTension(clients, finalTeams) {
       broadcast.team2.rating = finalTeams.team2.rating;
     }
 
-    clients.forEach((client) => client.send(JSON.stringify(broadcast)));
+    // Send to all connected socket.io clients
+    io.emit("message", JSON.stringify(broadcast));
   }, timeout);
 }
 
@@ -761,9 +756,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const server = app.listen(PORT, () =>
-  console.log(`Server started on port: ${PORT}`)
-);
+server.listen(PORT, () => console.log(`Server started on port: ${PORT}`));
 
 // TODO Get matches from a single league
 // app.get("/league/:leagueId", async (req, res, next) => {
