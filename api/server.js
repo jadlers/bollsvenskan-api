@@ -56,6 +56,10 @@ io.on("connection", (socket) => {
   });
 });
 
+// Import functions
+const db = require("./db.js");
+const elo = require("./elo.js");
+
 // Monitoring
 const Prometheus = require("prom-client");
 Prometheus.collectDefaultMetrics();
@@ -72,10 +76,6 @@ const httpRequestTotal = new Prometheus.Counter({
   help: "Number of HTTP requests processed",
   labelNames: ["method", "route", "status_code"],
 });
-
-// Import functions
-const db = require("./db.js");
-const elo = require("./elo.js");
 
 // Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
 app.get("/devops", async (req, res, next) => {
