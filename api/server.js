@@ -57,7 +57,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(`Client closed connection, ${`???`} connected client(s)`);
+    console.log(`Client closed connection`);
   });
 });
 
