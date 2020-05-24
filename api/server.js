@@ -281,6 +281,53 @@ app.post("/match", async (req, res, next) => {
     }
   });
 
+  // If dotaMatchId is set and already exist then update instead
+  const existingMatch = await db.getMatchByDotaMatchId(dotaMatchId);
+  if (existingMatch !== null) {
+    const matchId = existingMatch.id;
+    try {
+      await db.beginTransaction();
+
+      let playersInMatch = await playersInMatchPromise;
+      // Update stats
+      for (let i = 0; i < coolStats.length; i++) {
+        const { userId, ...stats } = coolStats[i];
+        const userInfo = playersInMatch.find(
+          (player) => player.userId === userId
+        );
+        await db.addStatsForUserToMatch(
+          matchId,
+          userId,
+          userInfo.eloRating,
+          stats
+        );
+      }
+
+      // Update first blood
+      await db.setFirstBlood(matchId, diedFirstBlood);
+
+      await db.commitTransaction();
+      console.log({
+        eventType: "DB",
+        function: "addNewMatch",
+        message: "Updated match with information shown in data",
+        data: JSON.stringify(verifiedBody),
+      });
+
+      res.status(200).json({
+        message: "Successfully updated new match",
+      });
+      next();
+      return;
+    } catch (error) {
+      await db.rollbackTransaction();
+      console.log(error);
+      res.status(500).json({ message: "Internal error adding new match" });
+      next();
+      return;
+    }
+  }
+
   // 2. Add to DB
   try {
     // Start a transaction

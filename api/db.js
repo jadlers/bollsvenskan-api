@@ -136,10 +136,7 @@ exports.addNewMatch = async function (
       }
 
       if (diedFirstBlood) {
-        await db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
-          diedFirstBlood,
-          matchId,
-        ]);
+        await setFirstBlood(matchId, diedFirstBlood);
       }
 
       resolve(matchId);
@@ -148,6 +145,15 @@ exports.addNewMatch = async function (
     }
   });
 };
+
+async function setFirstBlood(matchId, userId) {
+  return db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
+    userId,
+    matchId,
+  ]);
+}
+
+exports.setFirstBlood = setFirstBlood;
 
 exports.addUserToTeam = async function (teamId, userId) {
   return await db.one(
@@ -186,6 +192,11 @@ exports.setUserEloRatingForMatch = async function (matchId, userId, eloRating) {
     [matchId, userId, eloRating]
   );
 };
+
+exports.getMatchByDotaMatchId = (dotaMatchId) =>
+  db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
+    dotaMatchId,
+  ]);
 
 /* TEAMS */
 
