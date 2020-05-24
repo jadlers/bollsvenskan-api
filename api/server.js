@@ -422,6 +422,9 @@ app.post("/match", async (req, res, next) => {
       data: JSON.stringify(verifiedBody),
     });
 
+    // TODO: Fix the updating of rating above
+    recalculateEloRatingForAllPlayers();
+
     res.status(200).json({
       message: "Successfully added new match",
     });
