@@ -1,9 +1,12 @@
-require("dotenv").config();
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const Joi = require("@hapi/joi");
-const socketIo = require("socket.io");
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import http from 'http';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import Joi from '@hapi/joi';
+import socketIo from 'socket.io';
 
 const app = express();
 
@@ -12,43 +15,44 @@ app.use(cors());
 app.use(bodyParser.json());
 
 let server;
-if (process.env.NODE_ENV === "development") {
-  console.log("Development build");
-  const http = require("http");
+if (process.env.NODE_ENV === 'development') {
+  console.log('Development build');
+  // const http = require('http');
   server = http.createServer(app);
 } else {
-  console.log("Production build");
-  let fs = require("fs");
+  console.log('Production build');
+  let fs = require('fs');
   const options = {
     key: fs.readFileSync(process.env.KEY_FILE),
-    cert: fs.readFileSync(process.env.CERT_FILE)
+    cert: fs.readFileSync(process.env.CERT_FILE),
   };
   // TODO: Look over this (http(s)). Temporary solution?
-  server = require("http").createServer(options, app);
+  // server = require('http').createServer(options, app);
+  server = http.createServer(options, app);
 }
 
 // WebSocket action
 const io = socketIo(server);
-io.on("connection", socket => {
+io.on('connection', (socket) => {
   console.log(`New client connected`);
 
-  socket.on("message", msg => {
+  socket.on('message', (msg) => {
     // Parse message and inform sender if it's not JSON
     try {
       msg = JSON.parse(msg);
     } catch (error) {
       socket.send(
         JSON.stringify({
-          type: "ERROR",
-          message: "Messages sent have to be JSON"
+          type: 'ERROR',
+          message: 'Messages sent have to be JSON',
         })
       );
       return;
     }
 
     // Check if message which we're waiting for with teams
-    if (msg.type === "BROADCAST_TEAMS") {
-      console.log("Slowly revealing following teams: ", msg.teams);
+    if (msg.type === 'BROADCAST_TEAMS') {
+      console.log('Slowly revealing following teams: ', msg.teams);
       sendTeamsWithTension(msg.teams); // Should still function
     } else {
       // Broadcast all other messages sent
@@ -56,35 +60,38 @@ io.on("connection", socket => {
     }
   });
 
-  socket.on("disconnect", () => {
+  socket.on('disconnect', () => {
     console.log(`Client closed connection`);
   });
 });
 
 // Import functions
-const db = require("./db.js");
-const elo = require("./elo.js");
+import * as db from './db.js';
+// const db = require('./db.js');
+import { ratingDiff, createBalancedTeams } from './elo.js';
+// const elo = require('./elo.js');
 
 // Monitoring
-const Prometheus = require("prom-client");
+// const Prometheus = require('prom-client');
+import Prometheus from 'prom-client';
 Prometheus.collectDefaultMetrics();
 
 const httpRequestDurationMicroseconds = new Prometheus.Histogram({
-  name: "http_request_duration_ms",
-  help: "Duration of HTTP requests in ms",
-  labelNames: ["method", "route", "status_code"],
-  buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000]
+  name: 'http_request_duration_ms',
+  help: 'Duration of HTTP requests in ms',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000],
 });
 
 const httpRequestTotal = new Prometheus.Counter({
-  name: "http_request_total",
-  help: "Number of HTTP requests processed",
-  labelNames: ["method", "route", "status_code"]
+  name: 'http_request_total',
+  help: 'Number of HTTP requests processed',
+  labelNames: ['method', 'route', 'status_code'],
 });
 
 // Interested in DevOps? -> https://api.bollsvenskan.jacobadlers.com/devops
-app.get("/devops", async (req, res, next) => {
-  res.redirect("https://bollsvenskan.jacobadlers.com/devops");
+app.get('/devops', async (req, res, next) => {
+  res.redirect('https://bollsvenskan.jacobadlers.com/devops');
 });
 
 // Start monitoring
@@ -94,25 +101,25 @@ app.use((req, res, next) => {
 });
 
 // Add endpoint for metrics
-app.get("/metrics", (req, res) => {
-  res.set("Content-Type", Prometheus.register.contentType);
+app.get('/metrics', (req, res) => {
+  res.set('Content-Type', Prometheus.register.contentType);
   res.end(Prometheus.register.metrics());
 });
 
 const PORT = process.env.API_SERVER_PORT;
 
-app.get("/ping", async (req, res, next) => {
-  res.status(200).json({ message: "Pong!" });
+app.get('/ping', async (req, res, next) => {
+  res.status(200).json({ message: 'Pong!' });
   next();
 });
 
 /** PLAYERS */
 
-app.get("/player/:playerId", async (req, res, next) => {
+app.get('/player/:playerId', async (req, res, next) => {
   const playerId = parseInt(req.params.playerId) || -1;
   if (playerId === -1) {
     res.status(400).json({
-      message: `Invalid player id '${req.params.playerId}'. Should be a number of a user in the database.`
+      message: `Invalid player id '${req.params.playerId}'. Should be a number of a user in the database.`,
     });
     next();
   }
@@ -122,27 +129,27 @@ app.get("/player/:playerId", async (req, res, next) => {
       id,
       username,
       full_name: fullName,
-      elo_rating: eloRating
+      elo_rating: eloRating,
     } = await db.getUser(playerId);
     res.status(200).json({ id, username, fullName, eloRating });
     next();
   } catch (error) {
-    res.status(500).json({ message: "Database error" });
+    res.status(500).json({ message: 'Database error' });
     next();
   }
 });
 
 // Get all players
-app.get("/player", async (req, res, next) => {
+app.get('/player', async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
-    const players = rows.map(player => {
+    const players = rows.map((player) => {
       const {
         id,
         username,
         password,
         full_name: fullName,
-        elo_rating: eloRating
+        elo_rating: eloRating,
       } = player;
       return { id, username, fullName, eloRating };
     });
@@ -150,30 +157,30 @@ app.get("/player", async (req, res, next) => {
     next();
   } catch (err) {
     console.log({
-      eventType: "DB",
-      function: "getAllUsers",
-      error: JSON.stringify(err)
+      eventType: 'DB',
+      function: 'getAllUsers',
+      error: JSON.stringify(err),
     });
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: 'Database error' });
     next();
   }
 });
 
 // Add new player
-app.post("/player", async (req, res, next) => {
+app.post('/player', async (req, res, next) => {
   const schema = Joi.object().keys({
-    username: Joi.string().required()
+    username: Joi.string().required(),
   });
 
   const {
     value: { username },
-    error
+    error,
   } = schema.validate(req.body);
 
   if (error) {
     console.log({
-      eventType: "InvalidRequest",
-      error: JSON.stringify(error)
+      eventType: 'InvalidRequest',
+      error: JSON.stringify(error),
     });
     res.status(400).json({ error: error.details[0].message });
     next();
@@ -183,32 +190,32 @@ app.post("/player", async (req, res, next) => {
     const userId = await db.addNewUser(username);
 
     console.log({
-      eventType: "DB",
-      function: "addNewUser",
-      message: `Added user ${username} with id ${userId}`
+      eventType: 'DB',
+      function: 'addNewUser',
+      message: `Added user ${username} with id ${userId}`,
     });
 
     res.status(200).json({
-      message: "User added successfully",
-      userId: userId
+      message: 'User added successfully',
+      userId: userId,
     });
     next();
   } catch (err) {
-    if (err.code === "23505") {
+    if (err.code === '23505') {
       console.log({
-        eventType: "DB",
-        function: "addNewUser",
-        message: `Error: User with username '${username}' already exists`
+        eventType: 'DB',
+        function: 'addNewUser',
+        message: `Error: User with username '${username}' already exists`,
       });
       res.status(400).json({ message: `A user with that name already exists` });
       next();
     } else {
       console.log({
-        eventType: "DB",
-        function: "addNewUser",
-        err
+        eventType: 'DB',
+        function: 'addNewUser',
+        err,
       });
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: 'Internal server error' });
       next();
     }
   }
@@ -217,43 +224,34 @@ app.post("/player", async (req, res, next) => {
 /** MATCHES */
 
 // Add new match
-app.post("/match", async (req, res, next) => {
+app.post('/match', async (req, res, next) => {
   // 1. Validate data needed exists
   const schema = Joi.object().keys({
     teams: Joi.array()
-      .items(
-        Joi.array()
-          .items(Joi.number())
-          .min(1)
-      )
+      .items(Joi.array().items(Joi.number()).min(1))
       .min(2)
       .required(),
-    score: Joi.array()
-      .items(Joi.number())
-      .min(2)
-      .required(),
-    winner: Joi.number()
-      .min(0)
-      .required(),
+    score: Joi.array().items(Joi.number()).min(2).required(),
+    winner: Joi.number().min(0).required(),
     leagueId: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
     diedFirstBlood: Joi.number(),
-    coolaStats: Joi.array().items(Joi.object())
+    coolaStats: Joi.array().items(Joi.object()),
   });
 
   const { value: verifiedBody, error } = schema.validate(req.body, {
-    abortEarly: false
+    abortEarly: false,
   });
 
   if (error) {
     const errorInformation = error.details.map(
-      d => d.message.replace(/\"/g, `'`) + " "
+      (d) => d.message.replace(/\"/g, `'`) + ' '
     );
 
     // Bad request, abort and give information about what has to change
     console.log(`Error in POST to /match:\n${error}`);
     res.status(400).json({
-      error: `${error.name}: ${errorInformation}`
+      error: `${error.name}: ${errorInformation}`,
     });
     next();
   }
@@ -265,7 +263,7 @@ app.post("/match", async (req, res, next) => {
     winner,
     dotaMatchId,
     diedFirstBlood,
-    coolaStats: coolStats
+    coolaStats: coolStats,
   } = verifiedBody;
   const leagueId = verifiedBody.leagueId || 0; // Default to the temporary test league
 
@@ -277,7 +275,7 @@ app.post("/match", async (req, res, next) => {
   const playersInMatchPromise = new Promise(async (resolve, reject) => {
     try {
       const userIds = teams.flat();
-      const userInfoPromises = userIds.map(async userId => {
+      const userInfoPromises = userIds.map(async (userId) => {
         const { username, elo_rating: eloRating } = await db.getUser(userId);
         return { userId, username, eloRating };
       });
@@ -302,7 +300,7 @@ app.post("/match", async (req, res, next) => {
       for (let i = 0; i < coolStats.length; i++) {
         const { userId, ...stats } = coolStats[i];
         const userInfo = playersInMatch.find(
-          player => player.userId === userId
+          (player) => player.userId === userId
         );
         await db.addStatsForUserToMatch(
           matchId,
@@ -317,21 +315,21 @@ app.post("/match", async (req, res, next) => {
 
       await db.commitTransaction();
       console.log({
-        eventType: "DB",
-        function: "addNewMatch",
-        message: "Updated match with information shown in data",
-        data: JSON.stringify(verifiedBody)
+        eventType: 'DB',
+        function: 'addNewMatch',
+        message: 'Updated match with information shown in data',
+        data: JSON.stringify(verifiedBody),
       });
 
       res.status(200).json({
-        message: "Successfully updated new match"
+        message: 'Successfully updated new match',
       });
       next();
       return;
     } catch (error) {
       await db.rollbackTransaction();
       console.log(error);
-      res.status(500).json({ message: "Internal error adding new match" });
+      res.status(500).json({ message: 'Internal error adding new match' });
       next();
       return;
     }
@@ -376,7 +374,9 @@ app.post("/match", async (req, res, next) => {
     // Add "cool" stats
     for (let i = 0; i < coolStats.length; i++) {
       const { userId, ...stats } = coolStats[i];
-      const userInfo = playersInMatch.find(player => player.userId === userId);
+      const userInfo = playersInMatch.find(
+        (player) => player.userId === userId
+      );
       await db.addStatsForUserToMatch(
         matchId,
         userId,
@@ -387,8 +387,8 @@ app.post("/match", async (req, res, next) => {
 
     // Update each players elo rating
     // 1. Get team average rating
-    const teamRatings = teams.map(team => {
-      const ratings = playersInMatch.filter(player =>
+    const teamRatings = teams.map((team) => {
+      const ratings = playersInMatch.filter((player) =>
         team.includes(player.userId)
       );
       const sumRating = ratings.reduce((acc, cur) => acc + cur.eloRating, 0);
@@ -407,9 +407,9 @@ app.post("/match", async (req, res, next) => {
     for (let teamIdx = 0; teamIdx < teams.length; teamIdx++) {
       const team = teams[teamIdx];
       for (let userIdx = 0; userIdx < team.length; userIdx++) {
-        const player = playersInMatch.find(p => p.userId === team[userIdx]);
+        const player = playersInMatch.find((p) => p.userId === team[userIdx]);
         // 3. Calculate new rating for each player
-        const newRatingChange = elo.ratingDiff(
+        const newRatingChange = ratingDiff(
           teamRatings[teamIdx],
           teamRatings[teamIdx === 0 ? 1 : 0],
           teamIdx === winner ? true : false,
@@ -423,23 +423,23 @@ app.post("/match", async (req, res, next) => {
 
     await db.commitTransaction();
     console.log({
-      eventType: "DB",
-      function: "addNewMatch",
-      message: "Added match with information shown in data",
-      data: JSON.stringify(verifiedBody)
+      eventType: 'DB',
+      function: 'addNewMatch',
+      message: 'Added match with information shown in data',
+      data: JSON.stringify(verifiedBody),
     });
 
     // TODO: Fix the updating of rating above
     recalculateEloRatingForAllPlayers();
 
     res.status(200).json({
-      message: "Successfully added new match"
+      message: 'Successfully added new match',
     });
     next();
   } catch (error) {
     await db.rollbackTransaction();
     console.log(error);
-    res.status(500).json({ message: "Internal error adding new match" });
+    res.status(500).json({ message: 'Internal error adding new match' });
     next();
   }
 });
@@ -448,7 +448,7 @@ app.post("/match", async (req, res, next) => {
 // app.get("/match/:matchId", async (req, res, next) => {
 
 // Return all matches
-app.get("/match", async (req, res, next) => {
+app.get('/match', async (req, res, next) => {
   let response;
 
   const schema = Joi.object().keys({ leagueId: Joi.number().min(0) });
@@ -456,7 +456,7 @@ app.get("/match", async (req, res, next) => {
 
   if (error) {
     const errorInformation = error.details.map(
-      d => d.message.replace(/\"/g, `'`) + " "
+      (d) => d.message.replace(/\"/g, `'`) + ' '
     );
     res.status(400).json({ error: errorInformation });
     next();
@@ -469,7 +469,7 @@ app.get("/match", async (req, res, next) => {
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
 
-      const scoreArr = match.score.split("-").map(n => parseInt(n));
+      const scoreArr = match.score.split('-').map((n) => parseInt(n));
 
       // Get all teams in the match
       const teamIds = await db.getTeamsInMatch(match.id);
@@ -503,7 +503,7 @@ app.get("/match", async (req, res, next) => {
         winner: match.winner,
         score: scoreArr,
         leagueId: match.league_id,
-        diedFirstBlood: match.died_first_blood
+        diedFirstBlood: match.died_first_blood,
       };
 
       if (match.dota_match_id) {
@@ -513,7 +513,7 @@ app.get("/match", async (req, res, next) => {
       final.push(obj);
     }
 
-    if (Object.keys(final[0]).includes("dotaMatchId")) {
+    if (Object.keys(final[0]).includes('dotaMatchId')) {
       final.sort((a, b) => a.dotaMatchId - b.dotaMatchId);
     }
 
@@ -522,20 +522,20 @@ app.get("/match", async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: 'Database error' });
     next();
   }
 });
 
 /* LEAGUE */
 
-app.delete("/league/:leagueId", async (req, res, next) => {
+app.delete('/league/:leagueId', async (req, res, next) => {
   const protectedLeagues = [1, 2];
   const leagueId = parseInt(req.params.leagueId);
 
   if (protectedLeagues.includes(leagueId)) {
     res.status(403).json({
-      message: `Leagues: ${protectedLeagues} are protected and cannot be deleted`
+      message: `Leagues: ${protectedLeagues} are protected and cannot be deleted`,
     });
     next();
   }
@@ -544,17 +544,17 @@ app.delete("/league/:leagueId", async (req, res, next) => {
     const deletedIds = await db.deleteAllMatchesFromLeague(leagueId);
     res.status(200).json({
       message: `Deleted all matches in league: ${leagueId}`,
-      deletedIds: deletedIds
+      deletedIds: deletedIds,
     });
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: 'Internal server error' });
     next();
   }
 });
 
-app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
+app.get('/league/:leagueId/last-dota-match-id', async (req, res, next) => {
   const leagueId = parseInt(req.params.leagueId);
   try {
     const dotaMatchId = await db.getLastDotaMatchIdFromLeague(leagueId);
@@ -562,21 +562,18 @@ app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Database error" });
+    res.status(500).json({ message: 'Database error' });
     next();
   }
 });
 
-app.post("/league/:leagueId/create-teams", async (req, res, next) => {
+app.post('/league/:leagueId/create-teams', async (req, res, next) => {
   const schema = Joi.object().keys({
-    players: Joi.array()
-      .items(Joi.number())
-      .min(2)
-      .required()
+    players: Joi.array().items(Joi.number()).min(2).required(),
   });
   const {
     value: { players: playerIds },
-    error
+    error,
   } = schema.validate(req.body);
 
   if (error) {
@@ -592,18 +589,18 @@ app.post("/league/:leagueId/create-teams", async (req, res, next) => {
   try {
     // Get name and rating for each player
     let players = await Promise.all(
-      playerIds.map(playerId => db.getUser(playerId))
+      playerIds.map((playerId) => db.getUser(playerId))
     );
-    players = players.map(player => {
+    players = players.map((player) => {
       return {
         id: player.id,
         name: player.username,
-        rating: player.elo_rating
+        rating: player.elo_rating,
       };
     });
 
     // Create balanced teams
-    const teams = elo.createBalancedTeams(players);
+    const teams = createBalancedTeams(players);
 
     res.status(200).json({ team1: teams[0], team2: teams[1] });
     next();
@@ -623,22 +620,22 @@ function sendTeamsWithTension(finalTeams) {
   const timeout = 2000;
   // The JSON object updated and sent
   let broadcast = {
-    type: "BROADCAST_TEAM_PLAYERS_ONE_BY_ONE",
+    type: 'BROADCAST_TEAM_PLAYERS_ONE_BY_ONE',
     team1: {
       players: [],
       numPlayers: finalTeams.team1.players.length,
-      rating: null
+      rating: null,
     },
     team2: {
       players: [],
       numPlayers: finalTeams.team2.players.length,
-      rating: null
+      rating: null,
     },
     playersLeft: shuffle(
       Object.entries(finalTeams)
         .map(([_, team]) => team.players)
         .flat()
-    )
+    ),
   };
 
   const intervalId = setInterval(() => {
@@ -649,11 +646,11 @@ function sendTeamsWithTension(finalTeams) {
 
     const [nextPlayer, ...remaining] = broadcast.playersLeft;
     const playerTeam = finalTeams.team1.players.includes(nextPlayer)
-      ? "team1"
-      : "team2";
+      ? 'team1'
+      : 'team2';
     broadcast[playerTeam].players = [
       ...broadcast[playerTeam].players,
-      nextPlayer
+      nextPlayer,
     ];
     broadcast.playersLeft = remaining;
 
@@ -664,7 +661,7 @@ function sendTeamsWithTension(finalTeams) {
     }
 
     // Send to all connected socket.io clients
-    io.emit("message", JSON.stringify(broadcast));
+    io.emit('message', JSON.stringify(broadcast));
   }, timeout);
 }
 
@@ -687,15 +684,15 @@ function shuffle(array) {
 }
 
 // NOTE: Careful, this should be locked and only available for admins
-app.get("/recalculate-elo-for-all-players", async (req, res, next) => {
+app.get('/recalculate-elo-for-all-players', async (req, res, next) => {
   try {
     const updatedData = await recalculateEloRatingForAllPlayers();
     updatedData.sort((a, b) => a.id - b.id);
-    res.status(200).json({ message: "Success!", data: updatedData });
+    res.status(200).json({ message: 'Success!', data: updatedData });
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).send("Nope");
+    res.status(500).send('Nope');
     next();
   }
 });
@@ -712,19 +709,19 @@ async function recalculateEloRatingForAllPlayers() {
     const matches = await db.getAllMatchesFromLeague(2); // NOTE: Hardcoded league
     // Make sure the matches are sorted in order since we're rewriting the ELO
     // advancments of each player from the beginning
-    matches.forEach(match => {
+    matches.forEach((match) => {
       match.dota_match_id = parseInt(match.dota_match_id);
     });
     matches.sort((a, b) => a.dota_match_id - b.dota_match_id);
 
     // Get data needed for each player: userId, eloRating, matchesPlayed
     const users = await db.getAllUsers();
-    const playerData = users.map(user => {
+    const playerData = users.map((user) => {
       return {
         id: user.id,
         username: user.username,
         eloRating: 1500,
-        matchesPlayed: 0
+        matchesPlayed: 0,
       };
     });
 
@@ -733,18 +730,18 @@ async function recalculateEloRatingForAllPlayers() {
       // Needed for each match: playerIds, winningTeamPlayerIds, averageTeamRatings
       const teamIds = await db.getTeamsInMatch(match.id);
       const teams = await Promise.all(
-        teamIds.map(async teamId => {
+        teamIds.map(async (teamId) => {
           return { id: teamId, playerIds: await db.getUsersInTeam(teamId) };
         })
       );
 
-      const playersIdsInMatch = teams.map(team => team.playerIds).flat();
+      const playersIdsInMatch = teams.map((team) => team.playerIds).flat();
 
       // Calculate both teams average ELO (ELO for each player in the team)
-      teams.forEach(team => {
+      teams.forEach((team) => {
         const totalRating = team.playerIds.reduce((acc, playerId) => {
           const currentPlayerData = playerData.find(
-            player => player.id === playerId
+            (player) => player.id === playerId
           );
           return acc + currentPlayerData.eloRating;
         }, 0);
@@ -753,17 +750,17 @@ async function recalculateEloRatingForAllPlayers() {
 
       // DB: Update the ELO for each player in the match
       await Promise.all(
-        teams.map(async team => {
+        teams.map(async (team) => {
           // Find out which players are in the winning team
           const winner = team.id === match.winning_team_id;
           // Calculate diff for each player
-          team.playerIds.forEach(async playerId => {
+          team.playerIds.forEach(async (playerId) => {
             const currentPlayerInfo = playerData.find(
-              player => player.id === playerId
+              (player) => player.id === playerId
             );
-            const eloRatingDiff = elo.ratingDiff(
+            const eloRatingDiff = ratingDiff(
               team.averageEloRating,
-              teams.filter(t => t.id !== team.id)[0].averageEloRating,
+              teams.filter((t) => t.id !== team.id)[0].averageEloRating,
               winner,
               currentPlayerInfo.matchesPlayed
             );
@@ -776,8 +773,8 @@ async function recalculateEloRatingForAllPlayers() {
 
       // DB: Add players current ELO to match in user_match_stats
       await Promise.all(
-        playersIdsInMatch.map(playerId => {
-          const currentElo = playerData.find(player => player.id === playerId)
+        playersIdsInMatch.map((playerId) => {
+          const currentElo = playerData.find((player) => player.id === playerId)
             .eloRating;
           return db.setUserEloRatingForMatch(match.id, playerId, currentElo);
         })
@@ -787,7 +784,7 @@ async function recalculateEloRatingForAllPlayers() {
     // Log all users with updated eloRating
     console.log(
       playerData
-        .filter(player => player.matchesPlayed > 0)
+        .filter((player) => player.matchesPlayed > 0)
         .sort((a, b) => a.id - b.id)
     );
     return playerData;

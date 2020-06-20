@@ -5,9 +5,6 @@
  * Rewrite off @ninyya's python implementation
  */
 
-exports.ratingDiff = ratingDiff;
-exports.createBalancedTeams = createBalancedTeams;
-
 /**
  * Probablility for rating1 winning over rating2
  */
@@ -33,7 +30,7 @@ function probability(rating1, rating2) {
  * @param win: boolean. True if currentRating won, false otherwise
  * @param numberOfGames: number. Number of games the player has played
  */
-function ratingDiff(currentRating, opponentRating, win, numberOfGames) {
+export function ratingDiff(currentRating, opponentRating, win, numberOfGames) {
   let k = 30;
   if (numberOfGames <= 25) k = 50;
   if (numberOfGames <= 10) k = 100;
@@ -48,7 +45,7 @@ function ratingDiff(currentRating, opponentRating, win, numberOfGames) {
  * Create balanced teams based on the players rating.
  * @param players is an array of objects with name and their rating
  */
-function createBalancedTeams(players) {
+export function createBalancedTeams(players) {
   players.sort((a, b) => b.rating - a.rating);
 
   const teamSize = players.length / 2;
@@ -70,7 +67,10 @@ function createBalancedTeams(players) {
 
       return acc;
     },
-    [{ players: [], rating: 0 }, { players: [], rating: 0 }]
+    [
+      { players: [], rating: 0 },
+      { players: [], rating: 0 },
+    ]
   );
 
   return teams;

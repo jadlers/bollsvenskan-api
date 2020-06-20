@@ -1,6 +1,7 @@
 {
   "name": "Bollsvenskan-API",
   "version": "0.0.1",
+  "type": "module",
   "description": "Express server API for Bollsvenskan",
   "author": "Jacob Adlers",
   "license": "MIT",

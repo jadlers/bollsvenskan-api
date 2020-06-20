@@ -1,11 +1,15 @@
 // All communication with the database belongs here. Should only contain CRUD
 // operation and no logic.
+import dotenv from 'dotenv';
+dotenv.config();
+
+import pgp from 'pg-promise';
 
 const {
   POSTGRES_USER,
   POSTGRES_PASSWORD,
   POSTGRES_HOST,
-  POSTGRES_DB
+  POSTGRES_DB,
 } = process.env;
 
 // NOTE: When hosting on heroku they expose a DATABASE_URL to connect to their DB.
@@ -14,105 +18,104 @@ const dbConnectionString =
   process.env.DATABASE_URL ||
   `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`;
 
-const pgp = require("pg-promise")();
-const db = pgp(dbConnectionString);
+const db = pgp(/* initialization options */)(dbConnectionString);
 
 /* TRANSACTIONS */
-exports.beginTransaction = async function() {
-  return db.none("BEGIN TRANSACTION");
-};
+export async function beginTransaction() {
+  return db.none('BEGIN TRANSACTION');
+}
 
-exports.commitTransaction = async function() {
-  return db.none("COMMIT");
-};
+export async function commitTransaction() {
+  return db.none('COMMIT');
+}
 
-exports.rollbackTransaction = async function() {
-  return db.none("ROLLBACK");
-};
+export async function rollbackTransaction() {
+  return db.none('ROLLBACK');
+}
 
 /* USERS */
-exports.getAllUsers = function() {
-  return db.any("SELECT * FROM users");
-};
+export function getAllUsers() {
+  return db.any('SELECT * FROM users');
+}
 
-exports.getUser = function(userId) {
-  return db.one("SELECT * FROM users WHERE id = $1", [userId]);
-};
+export function getUser(userId) {
+  return db.one('SELECT * FROM users WHERE id = $1', [userId]);
+}
 
-exports.setUserEloRating = function(userId, newRating) {
-  return db.any("UPDATE users SET elo_rating = $2 WHERE id = $1", [
+export function setUserEloRating(userId, newRating) {
+  return db.any('UPDATE users SET elo_rating = $2 WHERE id = $1', [
     userId,
-    newRating
+    newRating,
   ]);
-};
+}
 
-exports.getNumberOfMatchesInLeague = function(userId, leagueId) {
+export function getNumberOfMatchesInLeague(userId, leagueId) {
   return db.one(
-    "SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1",
+    'SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1',
     [userId, leagueId]
   );
-};
+}
 
 /**
  * Adds a new player to the database and return its created id.
  */
-exports.addNewUser = function(username) {
+export function addNewUser(username) {
   return new Promise((resolve, reject) => {
-    db.one("INSERT INTO users (username) VALUES ($1) RETURNING *", [username])
-      .then(row => resolve(row.id))
-      .catch(err => reject(err));
+    db.one('INSERT INTO users (username) VALUES ($1) RETURNING *', [username])
+      .then((row) => resolve(row.id))
+      .catch((err) => reject(err));
   });
-};
+}
 
-exports.getUserStatsFromMatch = function(userId, matchId) {
+export function getUserStatsFromMatch(userId, matchId) {
   return db.one(
-    "SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2",
+    'SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2',
     [userId, matchId]
   );
-};
+}
 
-exports.getUsersInTeam = async function(teamId) {
+export async function getUsersInTeam(teamId) {
   const rows = await db.any(
-    "SELECT user_id FROM team_players WHERE team_id = $1",
+    'SELECT user_id FROM team_players WHERE team_id = $1',
     [teamId]
   );
-  return rows.map(r => r.user_id);
-};
+  return rows.map((r) => r.user_id);
+}
 
 /* TEAMS */
 
 // Returns the ids of the teams which are in the given match
-exports.getTeamsInMatch = async function(matchId) {
+export async function getTeamsInMatch(matchId) {
   return new Promise(async (resolve, reject) => {
     try {
       const data = await db.many(
-        "SELECT team_id FROM match_teams WHERE match_id = $1",
+        'SELECT team_id FROM match_teams WHERE match_id = $1',
         matchId
       );
 
-      const teamIds = data.map(m => m.team_id);
+      const teamIds = data.map((m) => m.team_id);
       resolve(teamIds);
     } catch (error) {
       console.log(error);
       reject([]);
     }
   });
-};
+}
 
-exports.addTeamToMatch = async function(matchId, teamId) {
+export async function addTeamToMatch(matchId, teamId) {
   return await db.one(
-    "INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2) RETURNING *",
+    'INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2) RETURNING *',
     [matchId, teamId]
   );
-};
+}
 
 /* MATCHES */
 
-exports.getAllMatches = async function() {
-  return await db.any("SELECT * FROM matches WHERE league_id = 2");
-};
+export async function getAllMatches() {
+  return await db.any('SELECT * FROM matches WHERE league_id = 2');
+}
 
-exports.addNewMatch = async function(
+export async function addNewMatch(
   score,
   winningTeamId,
   leagueId,
@@ -122,16 +125,16 @@ exports.addNewMatch = async function(
   return new Promise(async (resolve, reject) => {
     try {
       const row = await db.one(
-        "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
+        'INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *',
         [score, winningTeamId, leagueId]
       );
       const matchId = row.id;
 
       // Add optional data
       if (dotaMatchId) {
-        await db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
+        await db.any('UPDATE matches SET dota_match_id = $1 WHERE id = $2', [
           dotaMatchId,
-          matchId
+          matchId,
         ]);
       }
 
@@ -144,32 +147,33 @@ exports.addNewMatch = async function(
       reject(error);
     }
   });
-};
+}
 
 async function setFirstBlood(matchId, userId) {
-  return db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
+  return db.any('UPDATE matches SET died_first_blood = $1 WHERE id = $2', [
     userId,
-    matchId
+    matchId,
   ]);
 }
 
-exports.setFirstBlood = setFirstBlood;
+const _setFirstBlood = setFirstBlood;
+export { _setFirstBlood as setFirstBlood };
 
-exports.addUserToTeam = async function(teamId, userId) {
+export async function addUserToTeam(teamId, userId) {
   return await db.one(
-    "INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *",
+    'INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *',
     [teamId, userId]
   );
-};
+}
 
-exports.addStatsForUserToMatch = async function(
+export async function addStatsForUserToMatch(
   matchId,
   userId,
   eloRating,
   stats
 ) {
   return await db.one(
-    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points, elo_rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10, elo_rating = $11 RETURNING *",
+    'INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points, elo_rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10, elo_rating = $11 RETURNING *',
     [
       matchId,
       userId,
@@ -181,60 +185,61 @@ exports.addStatsForUserToMatch = async function(
       stats.sen_placed,
       stats.sentry_kills,
       stats.fantasyPoints,
-      eloRating
+      eloRating,
     ]
   );
-};
+}
 
-exports.setUserEloRatingForMatch = async function(matchId, userId, eloRating) {
+export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
   return db.any(
-    "UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2",
+    'UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2',
     [matchId, userId, eloRating]
   );
-};
+}
 
-exports.getMatchByDotaMatchId = dotaMatchId =>
-  db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
-    dotaMatchId
+export function getMatchByDotaMatchId(dotaMatchId) {
+  return db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
+    dotaMatchId,
   ]);
+}
 
 /* TEAMS */
 
 // Add new team without name and return its id
-exports.addNewTeam = async function() {
+export async function addNewTeam() {
   const row = await db.one(
-    "INSERT INTO teams (name) VALUES (NULL) RETURNING *"
+    'INSERT INTO teams (name) VALUES (NULL) RETURNING *'
   );
   return row.id;
-};
+}
 
 /* LEAGUES */
 
-exports.getAllMatchesFromLeague = async function(leagueId) {
-  return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
-};
+export async function getAllMatchesFromLeague(leagueId) {
+  return await db.any('SELECT * FROM matches WHERE league_id = $1', [leagueId]);
+}
 
-exports.getLastDotaMatchIdFromLeague = async function(leagueId) {
+export async function getLastDotaMatchIdFromLeague(leagueId) {
   return new Promise(async (resolve, reject) => {
     try {
       const rows = await db.any(
-        "SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id",
+        'SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id',
         [leagueId]
       );
-      const matchIds = rows.map(row => parseInt(row.dota_match_id));
+      const matchIds = rows.map((row) => parseInt(row.dota_match_id));
       resolve(Math.max(...matchIds));
     } catch (error) {
       reject(error);
     }
   });
-};
+}
 
-exports.deleteAllMatchesFromLeague = async function(leagueId) {
+export async function deleteAllMatchesFromLeague(leagueId) {
   const rows = await db.any(
-    "DELETE FROM matches WHERE league_id = $1 RETURNING *",
+    'DELETE FROM matches WHERE league_id = $1 RETURNING *',
     [leagueId]
   );
 
-  const deletedIds = rows.map(row => row.id);
+  const deletedIds = rows.map((row) => row.id);
   return deletedIds;
-};
+}
