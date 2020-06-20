@@ -70,10 +70,7 @@ function createBalancedTeams(players) {
 
       return acc;
     },
-    [
-      { players: [], rating: 0 },
-      { players: [], rating: 0 },
-    ]
+    [{ players: [], rating: 0 }, { players: [], rating: 0 }]
   );
 
   return teams;
