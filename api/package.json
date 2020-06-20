@@ -5,10 +5,10 @@
   "author": "Jacob Adlers",
   "license": "MIT",
   "scripts": {
-    "start": "node server.js",
-    "dev": "NODE_ENV=development nodemon server.js",
-    "fmt:check": "prettier --check *.js",
-    "fmt:run": "prettier --write *.js"
+    "start": "node src/server.js",
+    "dev": "NODE_ENV=development nodemon src/server.js",
+    "fmt:check": "prettier --check src/*.js",
+    "fmt:run": "prettier --write src/*.js"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
