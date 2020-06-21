@@ -1,17 +1,5 @@
 # Bollsvenskan API
 
-<details>
-  <summary>DD2482 Easter egg instructions</summary>
-
-  In the [demo video](https://youtu.be/BX7Fa_DdlQc?t=82), at 1m22s, you can see
-  just above the `// Start monitoring` comment there is a route to `/devops`
-  which has the body of the function hidden. It also has a comment to draw some
-  attention to it saying `// Interested in DevOps?`. By following the link
-  specified
-  ([https://api.bollsvenskan.jacobadlers.com/devops](https://api.bollsvenskan.jacobadlers.com/devops))
-  you'll get to the Easter egg, try it out!
-</details>
-
 This repo contains the backend for
 [bollsvenskan](https://github.com/jadlers/bollsvenskan). Each service required
 runs in its own docker container orchestrated with `docker-compose`. The
