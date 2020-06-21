@@ -5,10 +5,20 @@
  * Rewrite off @ninyya's python implementation
  */
 
+interface player {
+  name: string;
+  rating: number;
+}
+
+interface team {
+  players: string[]; // TODO: Make array of interface player
+  rating: number;
+}
+
 /**
  * Probablility for rating1 winning over rating2
  */
-function probability(rating1, rating2) {
+function probability(rating1: number, rating2: number): number {
   return 1 / (1 + Math.pow(10, (rating2 - rating1) / 400));
 }
 
@@ -30,7 +40,12 @@ function probability(rating1, rating2) {
  * @param win: boolean. True if currentRating won, false otherwise
  * @param numberOfGames: number. Number of games the player has played
  */
-export function ratingDiff(currentRating, opponentRating, win, numberOfGames) {
+export function ratingDiff(
+  currentRating: number,
+  opponentRating: number,
+  win: boolean,
+  numberOfGames: number
+): number {
   let k = 30;
   if (numberOfGames <= 25) k = 50;
   if (numberOfGames <= 10) k = 100;
@@ -45,8 +60,15 @@ export function ratingDiff(currentRating, opponentRating, win, numberOfGames) {
  * Create balanced teams based on the players rating.
  * @param players is an array of objects with name and their rating
  */
-export function createBalancedTeams(players) {
+export function createBalancedTeams(
+  players: player[]
+): { players: string[]; rating: number }[] {
   players.sort((a, b) => b.rating - a.rating);
+
+  const emptyTeam: team = {
+    players: [],
+    rating: 0,
+  };
 
   const teamSize = players.length / 2;
   const teams = players.reduce(
@@ -67,10 +89,7 @@ export function createBalancedTeams(players) {
 
       return acc;
     },
-    [
-      { players: [], rating: 0 },
-      { players: [], rating: 0 },
-    ]
+    [emptyTeam, emptyTeam]
   );
 
   return teams;
@@ -79,9 +98,12 @@ export function createBalancedTeams(players) {
 /**
  * Pure function which adds a player to a team and updates the average rating of
  * it.
+ *
+ * @param player to add to the team
+ * @param team which the player is added to
  */
-function addPlayerToTeam(player, team) {
-  const newTeamPlayers = [].concat(team.players, player.name);
+function addPlayerToTeam(player: player, team: team): team {
+  const newTeamPlayers = [...team.players, player.name];
   // Calculate incremental average
   const teamRating =
     (team.rating * team.players.length + player.rating) /
