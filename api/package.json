@@ -7,7 +7,9 @@
   "license": "MIT",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "NODE_ENV=development nodemon src/server.js",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"TypeScript,Node\" \"yarn watch-ts\" \"yarn watch-node\"",
+    "watch-node": "NODE_ENV=development nodemon --watch build --verbose build/server.js",
+    "watch-ts": "tsc --pretty --watch",
     "fmt:check": "prettier --check src/*.js",
     "fmt:run": "prettier --write src/*.js"
   },
@@ -29,6 +31,7 @@
     "@types/express": "^4.17.6",
     "@types/hapi__joi": "^17.1.2",
     "@types/socket.io": "^2.1.8",
+    "concurrently": "^5.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^2.0.2",
     "typescript": "^3.9.5"
