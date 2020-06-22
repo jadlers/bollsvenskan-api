@@ -1,9 +1,9 @@
 // All communication with the database belongs here. Should only contain CRUD
 // operation and no logic.
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import pgp from 'pg-promise';
+import pgp from "pg-promise";
 
 const {
   POSTGRES_USER,
@@ -22,28 +22,28 @@ const db = pgp(/* initialization options */)(dbConnectionString);
 
 /* TRANSACTIONS */
 export async function beginTransaction() {
-  return db.none('BEGIN TRANSACTION');
+  return db.none("BEGIN TRANSACTION");
 }
 
 export async function commitTransaction() {
-  return db.none('COMMIT');
+  return db.none("COMMIT");
 }
 
 export async function rollbackTransaction() {
-  return db.none('ROLLBACK');
+  return db.none("ROLLBACK");
 }
 
 /* USERS */
 export function getAllUsers() {
-  return db.any('SELECT * FROM users');
+  return db.any("SELECT * FROM users");
 }
 
 export function getUser(userId) {
-  return db.one('SELECT * FROM users WHERE id = $1', [userId]);
+  return db.one("SELECT * FROM users WHERE id = $1", [userId]);
 }
 
 export function setUserEloRating(userId, newRating) {
-  return db.any('UPDATE users SET elo_rating = $2 WHERE id = $1', [
+  return db.any("UPDATE users SET elo_rating = $2 WHERE id = $1", [
     userId,
     newRating,
   ]);
@@ -51,7 +51,7 @@ export function setUserEloRating(userId, newRating) {
 
 export function getNumberOfMatchesInLeague(userId, leagueId) {
   return db.one(
-    'SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1',
+    "SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1",
     [userId, leagueId]
   );
 }
@@ -61,7 +61,7 @@ export function getNumberOfMatchesInLeague(userId, leagueId) {
  */
 export function addNewUser(username) {
   return new Promise((resolve, reject) => {
-    db.one('INSERT INTO users (username) VALUES ($1) RETURNING *', [username])
+    db.one("INSERT INTO users (username) VALUES ($1) RETURNING *", [username])
       .then((row) => resolve(row.id))
       .catch((err) => reject(err));
   });
@@ -69,14 +69,14 @@ export function addNewUser(username) {
 
 export function getUserStatsFromMatch(userId, matchId) {
   return db.one(
-    'SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2',
+    "SELECT * FROM user_match_stats WHERE user_id = $1 AND match_id = $2",
     [userId, matchId]
   );
 }
 
 export async function getUsersInTeam(teamId) {
   const rows = await db.any(
-    'SELECT user_id FROM team_players WHERE team_id = $1',
+    "SELECT user_id FROM team_players WHERE team_id = $1",
     [teamId]
   );
   return rows.map((r) => r.user_id);
@@ -89,7 +89,7 @@ export async function getTeamsInMatch(matchId) {
   return new Promise(async (resolve, reject) => {
     try {
       const data = await db.many(
-        'SELECT team_id FROM match_teams WHERE match_id = $1',
+        "SELECT team_id FROM match_teams WHERE match_id = $1",
         matchId
       );
 
@@ -104,7 +104,7 @@ export async function getTeamsInMatch(matchId) {
 
 export async function addTeamToMatch(matchId, teamId) {
   return await db.one(
-    'INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2) RETURNING *',
+    "INSERT INTO match_teams (match_id, team_id) VALUES ($1, $2) RETURNING *",
     [matchId, teamId]
   );
 }
@@ -112,7 +112,7 @@ export async function addTeamToMatch(matchId, teamId) {
 /* MATCHES */
 
 export async function getAllMatches() {
-  return await db.any('SELECT * FROM matches WHERE league_id = 2');
+  return await db.any("SELECT * FROM matches WHERE league_id = 2");
 }
 
 export async function addNewMatch(
@@ -125,14 +125,14 @@ export async function addNewMatch(
   return new Promise(async (resolve, reject) => {
     try {
       const row = await db.one(
-        'INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *',
+        "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
         [score, winningTeamId, leagueId]
       );
       const matchId = row.id;
 
       // Add optional data
       if (dotaMatchId) {
-        await db.any('UPDATE matches SET dota_match_id = $1 WHERE id = $2', [
+        await db.any("UPDATE matches SET dota_match_id = $1 WHERE id = $2", [
           dotaMatchId,
           matchId,
         ]);
@@ -150,7 +150,7 @@ export async function addNewMatch(
 }
 
 async function setFirstBlood(matchId, userId) {
-  return db.any('UPDATE matches SET died_first_blood = $1 WHERE id = $2', [
+  return db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
     userId,
     matchId,
   ]);
@@ -161,7 +161,7 @@ export { _setFirstBlood as setFirstBlood };
 
 export async function addUserToTeam(teamId, userId) {
   return await db.one(
-    'INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *',
+    "INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *",
     [teamId, userId]
   );
 }
@@ -173,7 +173,7 @@ export async function addStatsForUserToMatch(
   stats
 ) {
   return await db.one(
-    'INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points, elo_rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10, elo_rating = $11 RETURNING *',
+    "INSERT INTO user_match_stats (match_id, user_id, kills, deaths, assists, observers_placed, observers_destroyed, sentries_placed, sentries_destroyed, fantasy_points, elo_rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (match_id, user_id) DO UPDATE SET kills = $3, deaths = $4, assists = $5, observers_placed = $6, observers_destroyed = $7, sentries_placed = $8, sentries_destroyed = $9, fantasy_points = $10, elo_rating = $11 RETURNING *",
     [
       matchId,
       userId,
@@ -192,7 +192,7 @@ export async function addStatsForUserToMatch(
 
 export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
   return db.any(
-    'UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2',
+    "UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2",
     [matchId, userId, eloRating]
   );
 }
@@ -208,7 +208,7 @@ export function getMatchByDotaMatchId(dotaMatchId) {
 // Add new team without name and return its id
 export async function addNewTeam() {
   const row = await db.one(
-    'INSERT INTO teams (name) VALUES (NULL) RETURNING *'
+    "INSERT INTO teams (name) VALUES (NULL) RETURNING *"
   );
   return row.id;
 }
@@ -216,14 +216,14 @@ export async function addNewTeam() {
 /* LEAGUES */
 
 export async function getAllMatchesFromLeague(leagueId) {
-  return await db.any('SELECT * FROM matches WHERE league_id = $1', [leagueId]);
+  return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
 }
 
 export async function getLastDotaMatchIdFromLeague(leagueId) {
   return new Promise(async (resolve, reject) => {
     try {
       const rows = await db.any(
-        'SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id',
+        "SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id",
         [leagueId]
       );
       const matchIds = rows.map((row) => parseInt(row.dota_match_id));
@@ -236,7 +236,7 @@ export async function getLastDotaMatchIdFromLeague(leagueId) {
 
 export async function deleteAllMatchesFromLeague(leagueId) {
   const rows = await db.any(
-    'DELETE FROM matches WHERE league_id = $1 RETURNING *',
+    "DELETE FROM matches WHERE league_id = $1 RETURNING *",
     [leagueId]
   );
 

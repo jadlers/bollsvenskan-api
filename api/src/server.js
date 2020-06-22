@@ -1,12 +1,12 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import express from 'express';
-import http from 'http';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import Joi from '@hapi/joi';
-import socketIo from 'socket.io';
+import express from "express";
+import http from "http";
+import bodyParser from "body-parser";
+import cors from "cors";
+import Joi from "@hapi/joi";
+import socketIo from "socket.io";
 
 const app = express();
 
@@ -15,13 +15,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 let server;
-if (process.env.NODE_ENV === 'development') {
-  console.log('Development build');
+if (process.env.NODE_ENV === "development") {
+  console.log("Development build");
   // const http = require('http');
   server = http.createServer(app);
 } else {
-  console.log('Production build');
-  let fs = require('fs');
+  console.log("Production build");
+  let fs = require("fs");
   const options = {
     key: fs.readFileSync(process.env.KEY_FILE),
     cert: fs.readFileSync(process.env.CERT_FILE),
@@ -33,26 +33,26 @@ if (process.env.NODE_ENV === 'development') {
 
 // WebSocket action
 const io = socketIo(server);
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`New client connected`);
 
-  socket.on('message', (msg) => {
+  socket.on("message", (msg) => {
     // Parse message and inform sender if it's not JSON
     try {
       msg = JSON.parse(msg);
     } catch (error) {
       socket.send(
         JSON.stringify({
-          type: 'ERROR',
-          message: 'Messages sent have to be JSON',
+          type: "ERROR",
+          message: "Messages sent have to be JSON",
         })
       );
       return;
     }
 
     // Check if message which we're waiting for with teams
-    if (msg.type === 'BROADCAST_TEAMS') {
-      console.log('Slowly revealing following teams: ', msg.teams);
+    if (msg.type === "BROADCAST_TEAMS") {
+      console.log("Slowly revealing following teams: ", msg.teams);
       sendTeamsWithTension(msg.teams); // Should still function
     } else {
       // Broadcast all other messages sent
@@ -60,33 +60,33 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     console.log(`Client closed connection`);
   });
 });
 
 // Import functions
-import * as db from './db.js';
+import * as db from "./db.js";
 // const db = require('./db.js');
-import { ratingDiff, createBalancedTeams } from './elo.js';
+import { ratingDiff, createBalancedTeams } from "./elo.js";
 // const elo = require('./elo.js');
 
 // Monitoring
 // const Prometheus = require('prom-client');
-import Prometheus from 'prom-client';
+import Prometheus from "prom-client";
 Prometheus.collectDefaultMetrics();
 
 const httpRequestDurationMicroseconds = new Prometheus.Histogram({
-  name: 'http_request_duration_ms',
-  help: 'Duration of HTTP requests in ms',
-  labelNames: ['method', 'route', 'status_code'],
+  name: "http_request_duration_ms",
+  help: "Duration of HTTP requests in ms",
+  labelNames: ["method", "route", "status_code"],
   buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000],
 });
 
 const httpRequestTotal = new Prometheus.Counter({
-  name: 'http_request_total',
-  help: 'Number of HTTP requests processed',
-  labelNames: ['method', 'route', 'status_code'],
+  name: "http_request_total",
+  help: "Number of HTTP requests processed",
+  labelNames: ["method", "route", "status_code"],
 });
 
 // Start monitoring
@@ -96,21 +96,21 @@ app.use((req, res, next) => {
 });
 
 // Add endpoint for metrics
-app.get('/metrics', (req, res) => {
-  res.set('Content-Type', Prometheus.register.contentType);
+app.get("/metrics", (req, res) => {
+  res.set("Content-Type", Prometheus.register.contentType);
   res.end(Prometheus.register.metrics());
 });
 
 const PORT = process.env.API_SERVER_PORT;
 
-app.get('/ping', async (req, res, next) => {
-  res.status(200).json({ message: 'Pong!' });
+app.get("/ping", async (req, res, next) => {
+  res.status(200).json({ message: "Pong!" });
   next();
 });
 
 /** PLAYERS */
 
-app.get('/player/:playerId', async (req, res, next) => {
+app.get("/player/:playerId", async (req, res, next) => {
   const playerId = parseInt(req.params.playerId) || -1;
   if (playerId === -1) {
     res.status(400).json({
@@ -129,13 +129,13 @@ app.get('/player/:playerId', async (req, res, next) => {
     res.status(200).json({ id, username, fullName, eloRating });
     next();
   } catch (error) {
-    res.status(500).json({ message: 'Database error' });
+    res.status(500).json({ message: "Database error" });
     next();
   }
 });
 
 // Get all players
-app.get('/player', async (req, res, next) => {
+app.get("/player", async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
     const players = rows.map((player) => {
@@ -152,17 +152,17 @@ app.get('/player', async (req, res, next) => {
     next();
   } catch (err) {
     console.log({
-      eventType: 'DB',
-      function: 'getAllUsers',
+      eventType: "DB",
+      function: "getAllUsers",
       error: JSON.stringify(err),
     });
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: "Database error" });
     next();
   }
 });
 
 // Add new player
-app.post('/player', async (req, res, next) => {
+app.post("/player", async (req, res, next) => {
   const schema = Joi.object().keys({
     username: Joi.string().required(),
   });
@@ -174,7 +174,7 @@ app.post('/player', async (req, res, next) => {
 
   if (error) {
     console.log({
-      eventType: 'InvalidRequest',
+      eventType: "InvalidRequest",
       error: JSON.stringify(error),
     });
     res.status(400).json({ error: error.details[0].message });
@@ -185,32 +185,32 @@ app.post('/player', async (req, res, next) => {
     const userId = await db.addNewUser(username);
 
     console.log({
-      eventType: 'DB',
-      function: 'addNewUser',
+      eventType: "DB",
+      function: "addNewUser",
       message: `Added user ${username} with id ${userId}`,
     });
 
     res.status(200).json({
-      message: 'User added successfully',
+      message: "User added successfully",
       userId: userId,
     });
     next();
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === "23505") {
       console.log({
-        eventType: 'DB',
-        function: 'addNewUser',
+        eventType: "DB",
+        function: "addNewUser",
         message: `Error: User with username '${username}' already exists`,
       });
       res.status(400).json({ message: `A user with that name already exists` });
       next();
     } else {
       console.log({
-        eventType: 'DB',
-        function: 'addNewUser',
+        eventType: "DB",
+        function: "addNewUser",
         err,
       });
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: "Internal server error" });
       next();
     }
   }
@@ -219,7 +219,7 @@ app.post('/player', async (req, res, next) => {
 /** MATCHES */
 
 // Add new match
-app.post('/match', async (req, res, next) => {
+app.post("/match", async (req, res, next) => {
   // 1. Validate data needed exists
   const schema = Joi.object().keys({
     teams: Joi.array()
@@ -240,7 +240,7 @@ app.post('/match', async (req, res, next) => {
 
   if (error) {
     const errorInformation = error.details.map(
-      (d) => d.message.replace(/\"/g, `'`) + ' '
+      (d) => d.message.replace(/\"/g, `'`) + " "
     );
 
     // Bad request, abort and give information about what has to change
@@ -310,21 +310,21 @@ app.post('/match', async (req, res, next) => {
 
       await db.commitTransaction();
       console.log({
-        eventType: 'DB',
-        function: 'addNewMatch',
-        message: 'Updated match with information shown in data',
+        eventType: "DB",
+        function: "addNewMatch",
+        message: "Updated match with information shown in data",
         data: JSON.stringify(verifiedBody),
       });
 
       res.status(200).json({
-        message: 'Successfully updated new match',
+        message: "Successfully updated new match",
       });
       next();
       return;
     } catch (error) {
       await db.rollbackTransaction();
       console.log(error);
-      res.status(500).json({ message: 'Internal error adding new match' });
+      res.status(500).json({ message: "Internal error adding new match" });
       next();
       return;
     }
@@ -418,9 +418,9 @@ app.post('/match', async (req, res, next) => {
 
     await db.commitTransaction();
     console.log({
-      eventType: 'DB',
-      function: 'addNewMatch',
-      message: 'Added match with information shown in data',
+      eventType: "DB",
+      function: "addNewMatch",
+      message: "Added match with information shown in data",
       data: JSON.stringify(verifiedBody),
     });
 
@@ -428,13 +428,13 @@ app.post('/match', async (req, res, next) => {
     recalculateEloRatingForAllPlayers();
 
     res.status(200).json({
-      message: 'Successfully added new match',
+      message: "Successfully added new match",
     });
     next();
   } catch (error) {
     await db.rollbackTransaction();
     console.log(error);
-    res.status(500).json({ message: 'Internal error adding new match' });
+    res.status(500).json({ message: "Internal error adding new match" });
     next();
   }
 });
@@ -443,7 +443,7 @@ app.post('/match', async (req, res, next) => {
 // app.get("/match/:matchId", async (req, res, next) => {
 
 // Return all matches
-app.get('/match', async (req, res, next) => {
+app.get("/match", async (req, res, next) => {
   let response;
 
   const schema = Joi.object().keys({ leagueId: Joi.number().min(0) });
@@ -451,7 +451,7 @@ app.get('/match', async (req, res, next) => {
 
   if (error) {
     const errorInformation = error.details.map(
-      (d) => d.message.replace(/\"/g, `'`) + ' '
+      (d) => d.message.replace(/\"/g, `'`) + " "
     );
     res.status(400).json({ error: errorInformation });
     next();
@@ -464,7 +464,7 @@ app.get('/match', async (req, res, next) => {
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
 
-      const scoreArr = match.score.split('-').map((n) => parseInt(n));
+      const scoreArr = match.score.split("-").map((n) => parseInt(n));
 
       // Get all teams in the match
       const teamIds = await db.getTeamsInMatch(match.id);
@@ -508,7 +508,7 @@ app.get('/match', async (req, res, next) => {
       final.push(obj);
     }
 
-    if (Object.keys(final[0]).includes('dotaMatchId')) {
+    if (Object.keys(final[0]).includes("dotaMatchId")) {
       final.sort((a, b) => a.dotaMatchId - b.dotaMatchId);
     }
 
@@ -517,14 +517,14 @@ app.get('/match', async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: "Database error" });
     next();
   }
 });
 
 /* LEAGUE */
 
-app.delete('/league/:leagueId', async (req, res, next) => {
+app.delete("/league/:leagueId", async (req, res, next) => {
   const protectedLeagues = [1, 2];
   const leagueId = parseInt(req.params.leagueId);
 
@@ -544,12 +544,12 @@ app.delete('/league/:leagueId', async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
     next();
   }
 });
 
-app.get('/league/:leagueId/last-dota-match-id', async (req, res, next) => {
+app.get("/league/:leagueId/last-dota-match-id", async (req, res, next) => {
   const leagueId = parseInt(req.params.leagueId);
   try {
     const dotaMatchId = await db.getLastDotaMatchIdFromLeague(leagueId);
@@ -557,12 +557,12 @@ app.get('/league/:leagueId/last-dota-match-id', async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Database error' });
+    res.status(500).json({ message: "Database error" });
     next();
   }
 });
 
-app.post('/league/:leagueId/create-teams', async (req, res, next) => {
+app.post("/league/:leagueId/create-teams", async (req, res, next) => {
   const schema = Joi.object().keys({
     players: Joi.array().items(Joi.number()).min(2).required(),
   });
@@ -615,7 +615,7 @@ function sendTeamsWithTension(finalTeams) {
   const timeout = 2000;
   // The JSON object updated and sent
   let broadcast = {
-    type: 'BROADCAST_TEAM_PLAYERS_ONE_BY_ONE',
+    type: "BROADCAST_TEAM_PLAYERS_ONE_BY_ONE",
     team1: {
       players: [],
       numPlayers: finalTeams.team1.players.length,
@@ -641,8 +641,8 @@ function sendTeamsWithTension(finalTeams) {
 
     const [nextPlayer, ...remaining] = broadcast.playersLeft;
     const playerTeam = finalTeams.team1.players.includes(nextPlayer)
-      ? 'team1'
-      : 'team2';
+      ? "team1"
+      : "team2";
     broadcast[playerTeam].players = [
       ...broadcast[playerTeam].players,
       nextPlayer,
@@ -656,7 +656,7 @@ function sendTeamsWithTension(finalTeams) {
     }
 
     // Send to all connected socket.io clients
-    io.emit('message', JSON.stringify(broadcast));
+    io.emit("message", JSON.stringify(broadcast));
   }, timeout);
 }
 
@@ -679,15 +679,15 @@ function shuffle(array) {
 }
 
 // NOTE: Careful, this should be locked and only available for admins
-app.get('/recalculate-elo-for-all-players', async (req, res, next) => {
+app.get("/recalculate-elo-for-all-players", async (req, res, next) => {
   try {
     const updatedData = await recalculateEloRatingForAllPlayers();
     updatedData.sort((a, b) => a.id - b.id);
-    res.status(200).json({ message: 'Success!', data: updatedData });
+    res.status(200).json({ message: "Success!", data: updatedData });
     next();
   } catch (error) {
     console.log(error);
-    res.status(500).send('Nope');
+    res.status(500).send("Nope");
     next();
   }
 });
