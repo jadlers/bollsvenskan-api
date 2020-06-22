@@ -1,12 +1,19 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-import express from "express";
-import http from "http";
+import Joi from "@hapi/joi";
 import bodyParser from "body-parser";
 import cors from "cors";
-import Joi from "@hapi/joi";
+import dotenv from "dotenv";
+import express from "express";
+import fs from "fs";
+import http from "http";
+import Prometheus from "prom-client";
 import socketIo from "socket.io";
+
+// Import my other modules
+import * as db from "./db.js";
+import { createBalancedTeams, ratingDiff } from "./elo.js";
+
+// Initialise dotenv
+dotenv.config();
 
 const app = express();
 
@@ -17,17 +24,14 @@ app.use(bodyParser.json());
 let server;
 if (process.env.NODE_ENV === "development") {
   console.log("Development build");
-  // const http = require('http');
   server = http.createServer(app);
 } else {
   console.log("Production build");
-  let fs = require("fs");
   const options = {
     key: fs.readFileSync(process.env.KEY_FILE),
     cert: fs.readFileSync(process.env.CERT_FILE),
   };
   // TODO: Look over this (http(s)). Temporary solution?
-  // server = require('http').createServer(options, app);
   server = http.createServer(options, app);
 }
 
@@ -65,15 +69,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Import functions
-import * as db from "./db.js";
-// const db = require('./db.js');
-import { ratingDiff, createBalancedTeams } from "./elo.js";
-// const elo = require('./elo.js');
-
 // Monitoring
-// const Prometheus = require('prom-client');
-import Prometheus from "prom-client";
 Prometheus.collectDefaultMetrics();
 
 const httpRequestDurationMicroseconds = new Prometheus.Histogram({
