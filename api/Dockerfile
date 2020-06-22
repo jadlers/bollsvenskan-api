@@ -8,6 +8,7 @@ COPY yarn.lock ./
 RUN yarn
 
 COPY . .
-EXPOSE ${API_SERVER_PORT}
+RUN yarn build
 
+EXPOSE ${API_SERVER_PORT}
 CMD [ "yarn", "start" ]
