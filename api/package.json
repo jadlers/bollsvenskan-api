@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/server.js",
-    "dev": "concurrently --prefix \"[{name}]\" --names \"TypeScript,Node\" \"yarn watch-ts\" \"yarn watch-node\"",
-    "watch-node": "NODE_ENV=development nodemon --watch build --verbose build/server.js",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"TypeScript,Node\" --prefix-colors \"yellow.bold,cyan.bold\" yarn:watch-ts yarn:watch-node",
+    "watch-node": "NODE_ENV=development nodemon --watch build build/server.js",
     "watch-ts": "tsc --pretty --watch",
     "fmt:check": "prettier --check src/*.js",
     "fmt:run": "prettier --write src/*.js"
