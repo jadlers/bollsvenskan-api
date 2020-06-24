@@ -6,11 +6,11 @@
   "author": "Jacob Adlers",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "rollup --config rollup.config.js",
     "start": "node build/server.js",
-    "dev": "concurrently --prefix \"[{name}]\" --names \"TypeScript,Node\" --prefix-colors \"yellow.bold,cyan.bold\" yarn:watch-ts yarn:watch-node",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"Rollup,Node\" --prefix-colors \"yellow.bold,cyan.bold\" yarn:watch-rollup yarn:watch-node",
     "watch-node": "NODE_ENV=development nodemon --watch build build/server.js",
-    "watch-ts": "tsc --pretty --watch",
+    "watch-rollup": "rollup --config rollup.config.js --watch",
     "fmt:check": "prettier --check src/*.js",
     "fmt:run": "prettier --write src/*.js"
   },
@@ -36,6 +36,8 @@
     "concurrently": "^5.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^2.0.2",
+    "rollup": "^2.18.0",
+    "rollup-plugin-typescript2": "^0.27.1",
     "typescript": "^3.9.5"
   }
 }

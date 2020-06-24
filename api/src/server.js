@@ -10,7 +10,7 @@ import socketIo from "socket.io";
 
 // Import my other modules
 import * as db from "./db.js";
-import { createBalancedTeams, ratingDiff } from "./elo.js";
+import { createBalancedTeams, ratingDiff } from "./elo.ts";
 
 // Initialise dotenv
 dotenv.config();
