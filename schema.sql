@@ -32,6 +32,7 @@ CREATE TABLE matches (
   score            VARCHAR(40),
   winning_team_id  INT,
   league_id        INT,
+  season           INT,
   dota_match_id    VARCHAR,
   died_first_blood INT -- TODO: References user.id
 );

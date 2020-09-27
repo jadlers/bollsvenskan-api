@@ -119,14 +119,15 @@ export async function addNewMatch(
   score,
   winningTeamId,
   leagueId,
+  season,
   dotaMatchId,
   diedFirstBlood
 ) {
   return new Promise(async (resolve, reject) => {
     try {
       const row = await db.one(
-        "INSERT INTO matches (score, winning_team_id, league_id) VALUES ($1, $2, $3) RETURNING *",
-        [score, winningTeamId, leagueId]
+        "INSERT INTO matches (score, winning_team_id, league_id, season) VALUES ($1, $2, $3, $4) RETURNING *",
+        [score, winningTeamId, leagueId, season]
       );
       const matchId = row.id;
 

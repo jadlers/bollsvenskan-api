@@ -225,6 +225,7 @@ app.post("/match", async (req, res, next) => {
     score: Joi.array().items(Joi.number()).min(2).required(),
     winner: Joi.number().min(0).required(),
     leagueId: Joi.number().min(0),
+    season: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
     diedFirstBlood: Joi.number(),
     coolaStats: Joi.array().items(Joi.object()),
@@ -257,6 +258,15 @@ app.post("/match", async (req, res, next) => {
     coolaStats: coolStats,
   } = verifiedBody;
   const leagueId = verifiedBody.leagueId || 0; // Default to the temporary test league
+
+  let season = null;
+  // Force the season to be 1 for the league 2 (Kung DotA)
+  // TODO: Make required, for now this'll do
+  if (leagueId === 2) {
+    season = 1;
+  } else if (verifiedBody.season !== undefined) {
+    season = verifiedBody.season;
+  }
 
   // Map stats to players
   for (let i = 0; i < coolStats.length; i++) {
@@ -350,6 +360,7 @@ app.post("/match", async (req, res, next) => {
       `${score[0]} - ${score[1]}`,
       teamIds[winner],
       leagueId,
+      season,
       dotaMatchId,
       diedFirstBlood
     );
