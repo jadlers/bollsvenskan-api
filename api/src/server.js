@@ -421,7 +421,7 @@ app.post("/match", async (req, res, next) => {
     });
 
     // TODO: Fix the updating of rating above
-    recalculateEloRatingForAllPlayers();
+    await recalculateEloRatingForAllPlayers();
 
     res.status(200).json({
       message: "Successfully added new match",
@@ -746,6 +746,9 @@ async function recalculateEloRatingForAllPlayers() {
           const winner = team.id === match.winning_team_id;
           // Calculate diff for each player
           team.playerIds.forEach(async (playerId) => {
+            if (playerId === 25) {
+              return;
+            }
             const currentPlayerInfo = playerData.find(
               (player) => player.id === playerId
             );
