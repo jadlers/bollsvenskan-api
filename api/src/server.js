@@ -505,6 +505,7 @@ app.get("/match", async (req, res, next) => {
         winner: match.winner,
         score: scoreArr,
         leagueId: match.league_id,
+        season: match.season,
         diedFirstBlood: match.died_first_blood,
       };
 
