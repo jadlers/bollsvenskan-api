@@ -27,12 +27,12 @@ if (process.env.NODE_ENV === "development") {
   server = http.createServer(app);
 } else {
   console.log("Production build");
-  const options = {
-    key: fs.readFileSync(process.env.KEY_FILE),
-    cert: fs.readFileSync(process.env.CERT_FILE),
-  };
+  // const options = {
+  //   key: fs.readFileSync(process.env.KEY_FILE),
+  //   cert: fs.readFileSync(process.env.CERT_FILE),
+  // };
   // TODO: Look over this (http(s)). Temporary solution?
-  server = http.createServer(options, app);
+  server = http.createServer(app);
 }
 
 // WebSocket action
