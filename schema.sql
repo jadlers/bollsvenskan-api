@@ -1,10 +1,13 @@
 -- DROP TABLE IF EXISTS users;
 CREATE TABLE users (
-  id         SERIAL         PRIMARY KEY,
-  full_name  VARCHAR(80),
-  username   VARCHAR(50)    NOT NULL        UNIQUE,
-  password   VARCHAR(140),
-  elo_rating INT            DEFAULT 1500 -- Current rating
+  id               SERIAL         PRIMARY KEY,
+  full_name        VARCHAR(80),
+  username         VARCHAR(50)    NOT NULL        UNIQUE,
+  password         VARCHAR(140),
+  elo_rating       INT            DEFAULT 1500, -- Current rating
+  steam32id        VARCHAR(12)    UNIQUE,
+  discord_id       VARCHAR(22)    UNIQUE,
+  discord_username VARCHAR(50)
 );
 
 -- DROP TABLE IF EXISTS teams;

@@ -121,8 +121,19 @@ app.get("/player/:playerId", async (req, res, next) => {
       username,
       full_name: fullName,
       elo_rating: eloRating,
+      steam32id,
+      discord_id: discordId,
+      discord_username: discordUsername,
     } = await db.getUser(playerId);
-    res.status(200).json({ id, username, fullName, eloRating });
+    res.status(200).json({
+      id,
+      username,
+      fullName,
+      eloRating,
+      steam32id,
+      discordId,
+      discordUsername,
+    });
     next();
   } catch (error) {
     res.status(500).json({ message: "Database error" });
@@ -141,8 +152,19 @@ app.get("/player", async (req, res, next) => {
         password,
         full_name: fullName,
         elo_rating: eloRating,
+        steam32id,
+        discord_id: discordId,
+        discord_username: discordUsername,
       } = player;
-      return { id, username, fullName, eloRating };
+      return {
+        id,
+        username,
+        fullName,
+        eloRating,
+        steam32id,
+        discordId,
+        discordUsername,
+      };
     });
     res.status(200).json({ players });
     next();
