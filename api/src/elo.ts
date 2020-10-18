@@ -96,6 +96,39 @@ export function createBalancedTeams(
 }
 
 /**
+ * n: number of elements to choose from
+ * r: how many elements to choose
+ */
+export function allCombinations(n: number, r: number): number[][] {
+  // initial array
+  let arr = [];
+  for (let i = 0; i < r; i++) {
+    arr.push(i);
+  }
+
+  let res = [];
+
+  // Got the algorithm from here
+  // https://dev.to/rrampage/algorithms-generating-combinations-100daysofcode-4o0a
+  let i = r - 1;
+  while (arr[0] < n - r + 1) {
+    // If outer elements are saturated, keep decrementing i till you find unsaturated element
+    while (i > 0 && arr[i] == n - r + i) {
+      i--;
+    }
+    res.push(arr.slice());
+    arr[i]++;
+    // Reset each outer element to prev element + 1
+    while (i < r - 1) {
+      arr[i + 1] = arr[i] + 1;
+      i++;
+    }
+  }
+
+  return res;
+}
+
+/**
  * Pure function which adds a player to a team and updates the average rating of
  * it.
  *
