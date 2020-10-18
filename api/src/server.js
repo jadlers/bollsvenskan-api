@@ -270,16 +270,15 @@ app.post("/match", async (req, res, next) => {
     next();
   }
 
+  console.log({
+    message: "POST /match",
+    data: JSON.stringify(verifiedBody),
+  });
+
   // All data needed is valid
-  const {
-    teams,
-    score,
-    winner,
-    dotaMatchId,
-    diedFirstBlood,
-    coolaStats: coolStats,
-  } = verifiedBody;
+  const { teams, score, winner, dotaMatchId, diedFirstBlood } = verifiedBody;
   const leagueId = verifiedBody.leagueId || 0; // Default to the temporary test league
+  const coolStats = verifiedBody.coolaStats || []; // Not required so might be undefined
 
   let season = null;
   // Force the season to be 1 for the league 2 (Kung DotA)
