@@ -14,19 +14,18 @@ describe("removeNullEntries", () => {
   });
 
   it("removes single null value", () => {
-    const oldB = obj.b;
-    obj.b = null;
-    expect(removeNullEntries(obj)).toEqual({
+    let o = { ...obj };
+    o.b = null;
+    expect(removeNullEntries(o)).toEqual({
       a: "test",
       "long-key": { c: true },
     });
-    obj.b = oldB;
   });
 
   it("Removes nested null", () => {
-    const oldC = obj["long-key"].c;
-    obj["long-key"].c = null;
-    expect(removeNullEntries(obj)).toEqual({
+    let o = { ...obj };
+    o["long-key"].c = null;
+    expect(removeNullEntries(o)).toEqual({
       a: obj.a,
       b: obj.b,
       "long-key": {},
