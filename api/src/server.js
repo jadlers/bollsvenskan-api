@@ -11,6 +11,7 @@ import socketIo from "socket.io";
 // Import my other modules
 import * as db from "./db.js";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
+import { getPlayer } from "./player.ts";
 
 // Initialise dotenv
 dotenv.config();
@@ -110,33 +111,18 @@ app.get("/player/:playerId", async (req, res, next) => {
   const playerId = parseInt(req.params.playerId) || -1;
   if (playerId === -1) {
     res.status(400).json({
-      message: `Invalid player id '${req.params.playerId}'. Should be a number of a user in the database.`,
+      message: `Invalid player id '${req.params.playerId}'. Must be a number of a user in the database.`,
     });
     next();
   }
 
   try {
-    const {
-      id,
-      username,
-      full_name: fullName,
-      elo_rating: eloRating,
-      steam32id,
-      discord_id: discordId,
-      discord_username: discordUsername,
-    } = await db.getUser(playerId);
-    res.status(200).json({
-      id,
-      username,
-      fullName,
-      eloRating,
-      steam32id,
-      discordId,
-      discordUsername,
-    });
+    const player = await getPlayer(playerId);
+    res.json({ ...player });
     next();
-  } catch (error) {
-    res.status(500).json({ message: "Database error" });
+  } catch (err) {
+    console.error(`Could not get player with id ${playerId}:`, err);
+    res.status(500).json({ error: "Internal server error" });
     next();
   }
 });
