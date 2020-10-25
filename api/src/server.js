@@ -10,7 +10,7 @@ import socketIo from "socket.io";
 // Import my other modules
 import * as db from "./db.js";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
-import { getPlayer } from "./player.ts";
+import { getPlayer, getDotaPlayer } from "./player.ts";
 
 // Initialise dotenv
 dotenv.config();
@@ -95,6 +95,9 @@ app.get("/ping", async (req, res, next) => {
 /** PLAYERS */
 
 app.get("/player/:playerId", async (req, res, next) => {
+  // GameType: "base" | "dota"
+  const type = req.query.type === "dota" ? "dota" : "base";
+
   const playerId = parseInt(req.params.playerId) || -1;
   if (playerId === -1) {
     res.status(400).json({
@@ -104,7 +107,10 @@ app.get("/player/:playerId", async (req, res, next) => {
   }
 
   try {
-    const player = await getPlayer(playerId);
+    const player =
+      type === "base"
+        ? await getPlayer(playerId)
+        : await getDotaPlayer(playerId);
     res.json(player);
     next();
   } catch (err) {
@@ -116,9 +122,14 @@ app.get("/player/:playerId", async (req, res, next) => {
 
 // Get all players
 app.get("/player", async (req, res, next) => {
+  // GameType: "base" | "dota"
+  const type = req.query.type === "dota" ? "dota" : "base";
+
   try {
     const rows = await db.getAllUsers();
-    const players = await Promise.all(rows.map((r) => getPlayer(r.id)));
+    const players = await Promise.all(
+      rows.map((r) => (type === "base" ? getPlayer(r.id) : getDotaPlayer(r.id)))
+    );
 
     res.status(200).json({ players });
     next();
