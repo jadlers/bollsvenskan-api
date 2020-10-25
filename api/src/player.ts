@@ -11,6 +11,7 @@ export type Player = {
   id: number;
   username: string;
   fullName?: string;
+  eloRating?: number;
   steam32id?: string;
   discordId?: string;
   discordUsername?: string;
@@ -65,6 +66,7 @@ export function getPlayer(playerId: number): Promise<Player> {
         id: id as number,
         username: username as string,
         fullName: fullName as string,
+        eloRating: eloRating as number,
         steam32id: steam32id as string,
         discordId: discordId as string,
         discordUsername: discordUsername as string,
