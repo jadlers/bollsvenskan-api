@@ -105,7 +105,7 @@ app.get("/player/:playerId", async (req, res, next) => {
 
   try {
     const player = await getPlayer(playerId);
-    res.json({ ...player });
+    res.json(player);
     next();
   } catch (err) {
     console.error(`Could not get player with id ${playerId}:`, err);
@@ -118,27 +118,8 @@ app.get("/player/:playerId", async (req, res, next) => {
 app.get("/player", async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
-    const players = rows.map((player) => {
-      const {
-        id,
-        username,
-        password,
-        full_name: fullName,
-        elo_rating: eloRating,
-        steam32id,
-        discord_id: discordId,
-        discord_username: discordUsername,
-      } = player;
-      return {
-        id,
-        username,
-        fullName,
-        eloRating,
-        steam32id,
-        discordId,
-        discordUsername,
-      };
-    });
+    const players = await Promise.all(rows.map((r) => getPlayer(r.id)));
+
     res.status(200).json({ players });
     next();
   } catch (err) {
