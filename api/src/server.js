@@ -3,7 +3,6 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import fs from "fs";
 import http from "http";
 import Prometheus from "prom-client";
 import socketIo from "socket.io";
@@ -22,19 +21,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-let server;
-if (process.env.NODE_ENV === "development") {
-  console.log("Development build");
-  server = http.createServer(app);
-} else {
-  console.log("Production build");
-  // const options = {
-  //   key: fs.readFileSync(process.env.KEY_FILE),
-  //   cert: fs.readFileSync(process.env.CERT_FILE),
-  // };
-  // TODO: Look over this (http(s)). Temporary solution?
-  server = http.createServer(app);
-}
+let server = http.createServer(app);
 
 // WebSocket action
 const io = socketIo(server);
