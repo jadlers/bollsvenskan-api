@@ -3,6 +3,7 @@ import {
   getUserMatches,
   getUserStatsFromMatch,
   getUserLeagueSeasons,
+  getMatch,
 } from "./db.js";
 import { removeNullEntries } from "./util";
 
@@ -20,6 +21,7 @@ type DotaBasicStats = {
   deaths: number;
   assists: number;
   matches?: number;
+  numFirstBloods?: number;
 };
 
 export type DotaPlayer = Player & {
@@ -151,8 +153,15 @@ function getPlayerDotaLeagueStats(
       const matches = await getPlayerDotaLeaugeMatches(playerId, leagueId);
       const matchesWithStats = await getBasicStatsForMatches(playerId, matches);
       const aggregateStats = aggregateBasicDotaStats(matchesWithStats);
+      const fbMatches = (await getPlayersFirstBloodMatches(playerId)).filter(
+        (m) => m.leagueId === leagueId
+      );
 
-      resolve({ matches: matches.length, ...aggregateStats });
+      resolve({
+        matches: matches.length,
+        ...aggregateStats,
+        numFirstBloods: fbMatches.length,
+      });
     } catch (err) {
       reject(err);
     }
@@ -177,20 +186,31 @@ function getPlayerDotaLeagueSeasonStats(
   return new Promise(async (resolve, reject) => {
     try {
       const matches = await getPlayerDotaLeaugeMatches(playerId, leagueId);
-      const [matchesWithStats, leagueSeasons] = await Promise.all([
+      const [
+        matchesWithStats,
+        leagueSeasons,
+        firstBloodMatches,
+      ] = await Promise.all([
         getBasicStatsForMatches(playerId, matches),
         getUserLeagueSeasons(playerId, leagueId),
+        (await getPlayersFirstBloodMatches(playerId)).filter(
+          (m) => m.leagueId === leagueId
+        ),
       ]);
 
-      const perSeasonStats = leagueSeasons.map((season) => {
+      const perSeasonStats = leagueSeasons.map((season: number) => {
         const seasonMatches = matchesWithStats.filter(
           (m) => m.season === season
         );
+        const numFirstBloods = firstBloodMatches.filter(
+          (m) => m.season === season
+        ).length;
         return {
           leagueId,
           season,
           matches: seasonMatches.length,
           ...aggregateBasicDotaStats(seasonMatches),
+          numFirstBloods,
         };
       });
 
@@ -245,6 +265,27 @@ function getPlayerDotaMatchStats(
       reject(err);
     }
   });
+}
+
+/**
+ * Returns all the matches in which the playerId died first blood.
+ */
+async function getPlayersFirstBloodMatches(playerId: number) {
+  const matches = await getPlayerDotaMatches(playerId);
+  const matchesData = await Promise.all(
+    matches.map((m) => getMatch(m.matchId))
+  );
+  const firstBloodMatches = matchesData
+    .filter((m) => m.died_first_blood === playerId)
+    .map((m) => {
+      return {
+        matchId: m.id as number,
+        leagueId: m.league_id as number,
+        season: m.season as number,
+        firstBloodPlayerId: m.died_first_blood as number,
+      };
+    });
+  return firstBloodMatches;
 }
 
 /**

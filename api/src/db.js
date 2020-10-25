@@ -160,6 +160,10 @@ export async function getAllMatches() {
   return await db.any("SELECT * FROM matches WHERE league_id = 2");
 }
 
+export async function getMatch(matchId) {
+  return await db.one("SELECT * FROM matches WHERE id = $1", [matchId]);
+}
+
 export async function addNewMatch(
   score,
   winningTeamId,
