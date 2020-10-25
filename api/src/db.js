@@ -57,6 +57,51 @@ export function getNumberOfMatchesInLeague(userId, leagueId) {
 }
 
 /**
+ * Returns a list of matches the user has played in.
+ */
+export function getUserMatches(userId) {
+  return new Promise(async (resolve, reject) => {
+    const res = await db.manyOrNone(
+      `SELECT m.id, m.league_id, m.season
+        FROM matches m
+        JOIN match_teams mt ON m.id = mt.match_id
+        JOIN team_players tp ON mt.team_id = tp.team_id
+        WHERE user_id = $1`,
+      [userId]
+    );
+
+    resolve(
+      res.map((match) => {
+        return {
+          matchId: match.id,
+          leagueId: match.league_id,
+          season: match.season,
+        };
+      })
+    );
+  });
+}
+
+/**
+ * Returns a list of the seasons in the league which the user participated in.
+ */
+export function getUserLeagueSeasons(userId, leagueId) {
+  return new Promise(async (resolve, reject) => {
+    db.manyOrNone(
+      `SELECT DISTINCT m.season
+        FROM matches m
+        JOIN match_teams mt ON m.id = mt.match_id
+        JOIN team_players tp ON mt.team_id = tp.team_id
+        WHERE user_id = $1
+        AND league_id = $2`,
+      [userId, leagueId]
+    )
+      .then((rows) => resolve(rows.map((r) => r.season)))
+      .catch((err) => reject(err));
+  });
+}
+
+/**
  * Adds a new player to the database and return its created id.
  */
 export function addNewUser(username) {
