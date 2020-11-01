@@ -1,7 +1,6 @@
 import Joi from "@hapi/joi";
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import Prometheus from "prom-client";
@@ -9,11 +8,9 @@ import socketIo from "socket.io";
 
 // Import my other modules
 import * as db from "./db.js";
+import { SERVER_PORT } from "./config.ts";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
-
-// Initialise dotenv
-dotenv.config();
 
 const app = express();
 
@@ -84,8 +81,6 @@ app.get("/metrics", (req, res) => {
   res.set("Content-Type", Prometheus.register.contentType);
   res.end(Prometheus.register.metrics());
 });
-
-const PORT = process.env.API_SERVER_PORT;
 
 app.get("/ping", async (req, res, next) => {
   res.status(200).json({ message: "Pong!" });
@@ -806,7 +801,9 @@ app.use((req, res, next) => {
   next();
 });
 
-server.listen(PORT, () => console.log(`Server started on port: ${PORT}`));
+server.listen(SERVER_PORT, () =>
+  console.log(`Server started on port: ${SERVER_PORT}`)
+);
 
 // TODO Get matches from a single league
 // app.get("/league/:leagueId", async (req, res, next) => {

@@ -1,24 +1,9 @@
 // All communication with the database belongs here. Should only contain CRUD
 // operation and no logic.
-import dotenv from "dotenv";
-dotenv.config();
-
 import pgp from "pg-promise";
 
-const {
-  POSTGRES_USER,
-  POSTGRES_PASSWORD,
-  POSTGRES_HOST,
-  POSTGRES_DB,
-} = process.env;
-
-// NOTE: When hosting on heroku they expose a DATABASE_URL to connect to their DB.
-// This check can be removed once the sever is no longer hosted on heroku.
-const dbConnectionString =
-  process.env.DATABASE_URL ||
-  `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`;
-
-const db = pgp(/* initialization options */)(dbConnectionString);
+import { DATABASE_CONNECTION_URL } from "./config.ts";
+const db = pgp(/* initialization options */)(DATABASE_CONNECTION_URL);
 
 /* TRANSACTIONS */
 export async function beginTransaction() {
