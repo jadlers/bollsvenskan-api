@@ -24,6 +24,7 @@
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
     "https": "^1.0.0",
+    "nextcloud-link": "^1.2.3",
     "pg-promise": "^10.5.2",
     "prom-client": "^12.0.0",
     "socket.io": "^2.3.0"
@@ -47,7 +48,7 @@
   "jest": {
     "preset": "ts-jest"
   },
-  "prettier":{
+  "prettier": {
     "singleQuote": false
   }
 }

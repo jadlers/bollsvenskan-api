@@ -5,14 +5,16 @@ import express from "express";
 import http from "http";
 import Prometheus from "prom-client";
 import socketIo from "socket.io";
+import NextcloudClient from "nextcloud-link";
 
 // Import my other modules
 import * as db from "./db.js";
-import { SERVER_PORT } from "./config.ts";
+import { SERVER_PORT, NEXTCLOUD_INFO } from "./config.ts";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
 
 const app = express();
+const ncClient = new NextcloudClient(NEXTCLOUD_INFO);
 
 // Add middleware
 app.use(cors());
@@ -85,6 +87,40 @@ app.get("/metrics", (req, res) => {
 app.get("/ping", async (req, res, next) => {
   res.status(200).json({ message: "Pong!" });
   next();
+});
+
+/** Dota signup */
+
+/**
+ * Returns the url of the document with all poll links as well as the url to the
+ * current poll.
+ */
+app.get("/dota-signup", async (req, res, next) => {
+  try {
+    await ncClient.checkConnectivity();
+
+    const signupDocumentUrl = (
+      await ncClient.shares.list("/Games/DotA/KungDota/anmalan.md")
+    )[0].url;
+
+    // Get link to signup poll
+    const signupDocument = await ncClient.get(
+      "/Games/DotA/KungDota/anmalan.md"
+    );
+    const lines = signupDocument.split("\n");
+    const pollUrlRegex = /^\*[^~]+<(.+)>/;
+    // Find the first line with a url that is not crossed out
+    const linkLine = lines.find((line) => {
+      let res = line.match(pollUrlRegex);
+      return res !== null ? true : false;
+    });
+    const currentPollUrl = linkLine ? linkLine.match(pollUrlRegex)[1] : "";
+
+    res.json({ signupDocumentUrl, currentPollUrl });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Could not get info from nextcloud" });
+  }
 });
 
 /** PLAYERS */
