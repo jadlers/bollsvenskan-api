@@ -1,6 +1,3 @@
-import * as dotenv from "dotenv";
-dotenv.config();
-
 const {
   POSTGRES_USER,
   POSTGRES_PASSWORD,

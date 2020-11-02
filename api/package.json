@@ -7,9 +7,9 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup --config rollup.config.js",
-    "start": "node build/server.js",
+    "start": "node --require dotenv/config build/server.js",
     "dev": "concurrently --prefix \"[{name}]\" --names \"Rollup,Node\" --prefix-colors \"yellow.bold,cyan.bold\" yarn:watch-rollup yarn:watch-node",
-    "watch-node": "NODE_ENV=development nodemon --watch build build/server.js",
+    "watch-node": "NODE_ENV=development nodemon --require dotenv/config --watch build build/server.js",
     "watch-rollup": "rollup --config rollup.config.js --watch",
     "fmt:check": "prettier --check src/*.js",
     "fmt:run": "prettier --write src/*.js",
