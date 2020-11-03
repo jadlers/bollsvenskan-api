@@ -30,14 +30,20 @@ CREATE TABLE team_players (
 -- There could be a single teams column with a CSV list of team ID's
 -- DROP TABLE IF EXISTS matches;
 CREATE TABLE matches (
-  id               SERIAL       PRIMARY KEY,
-  date             TIMESTAMP,
-  score            VARCHAR(40),
-  winning_team_id  INT,
-  league_id        INT,
-  season           INT,
-  dota_match_id    VARCHAR,
-  died_first_blood INT -- TODO: References user.id
+  ID                  SERIAL       PRIMARY KEY,
+  DATE                TIMESTAMP,
+  score               VARCHAR(40),
+  winning_team_id     INT,
+  league_id           INT,
+  season              INT,
+  dota_match_id       VARCHAR,
+  died_first_blood    INT, -- TODO: References user.id
+  claimed_first_blood INT,
+
+  FOREIGN KEY (claimed_first_blood) REFERENCES users (ID)
+          ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY (died_first_blood) REFERENCES users (id)
+          ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- DROP TABLE IF EXISTS match_teams;

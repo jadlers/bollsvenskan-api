@@ -246,6 +246,7 @@ app.post("/match", async (req, res, next) => {
     season: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
     diedFirstBlood: Joi.number(),
+    claimedFirstBlood: Joi.number(),
     coolaStats: Joi.array().items(Joi.object()),
   });
 
@@ -272,7 +273,14 @@ app.post("/match", async (req, res, next) => {
   });
 
   // All data needed is valid
-  const { teams, score, winner, dotaMatchId, diedFirstBlood } = verifiedBody;
+  const {
+    teams,
+    score,
+    winner,
+    dotaMatchId,
+    diedFirstBlood,
+    claimedFirstBlood,
+  } = verifiedBody;
   const leagueId = verifiedBody.leagueId || 0; // Default to the temporary test league
   const coolStats = verifiedBody.coolaStats || []; // Not required so might be undefined
 
@@ -329,7 +337,13 @@ app.post("/match", async (req, res, next) => {
       }
 
       // Update first blood
-      await db.setFirstBlood(matchId, diedFirstBlood);
+      if (diedFirstBlood) {
+        await db.setDiedFirstBlood(matchId, diedFirstBlood);
+      }
+
+      if (claimedFirstBlood) {
+        await db.setClaimedFirstBlood(matchId, claimedFirstBlood);
+      }
 
       await db.commitTransaction();
       console.log({
@@ -379,7 +393,8 @@ app.post("/match", async (req, res, next) => {
       leagueId,
       season,
       dotaMatchId,
-      diedFirstBlood
+      diedFirstBlood,
+      claimedFirstBlood
     );
 
     // Add tams to the newly created match
@@ -524,6 +539,7 @@ app.get("/match", async (req, res, next) => {
         leagueId: match.league_id,
         season: match.season,
         diedFirstBlood: match.died_first_blood,
+        claimedFirstBlood: match.claimed_first_blood,
       };
 
       if (match.dota_match_id) {

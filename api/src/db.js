@@ -155,7 +155,8 @@ export async function addNewMatch(
   leagueId,
   season,
   dotaMatchId,
-  diedFirstBlood
+  diedFirstBlood,
+  claimedFirstBlood
 ) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -174,7 +175,10 @@ export async function addNewMatch(
       }
 
       if (diedFirstBlood) {
-        await setFirstBlood(matchId, diedFirstBlood);
+        await setDiedFirstBlood(matchId, diedFirstBlood);
+      }
+      if (claimedFirstBlood) {
+        await setClaimedFirstBlood(matchId, claimedFirstBlood);
       }
 
       resolve(matchId);
@@ -184,15 +188,19 @@ export async function addNewMatch(
   });
 }
 
-async function setFirstBlood(matchId, userId) {
+export async function setDiedFirstBlood(matchId, userId) {
   return db.any("UPDATE matches SET died_first_blood = $1 WHERE id = $2", [
     userId,
     matchId,
   ]);
 }
 
-const _setFirstBlood = setFirstBlood;
-export { _setFirstBlood as setFirstBlood };
+export async function setClaimedFirstBlood(matchId, userId) {
+  return db.any("UPDATE matches SET claimed_first_blood = $1 WHERE id = $2", [
+    userId,
+    matchId,
+  ]);
+}
 
 export async function addUserToTeam(teamId, userId) {
   return await db.one(
