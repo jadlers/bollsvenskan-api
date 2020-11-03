@@ -37,13 +37,8 @@ CREATE TABLE matches (
   league_id           INT,
   season              INT,
   dota_match_id       VARCHAR,
-  died_first_blood    INT, -- TODO: References user.id
-  claimed_first_blood INT,
-
-  FOREIGN KEY (claimed_first_blood) REFERENCES users (ID)
-          ON DELETE SET NULL ON UPDATE CASCADE,
-  FOREIGN KEY (died_first_blood) REFERENCES users (id)
-          ON DELETE SET NULL ON UPDATE CASCADE
+  died_first_blood    INT,
+  claimed_first_blood INT
 );
 
 -- DROP TABLE IF EXISTS match_teams;
