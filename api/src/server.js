@@ -549,7 +549,7 @@ app.get("/match", async (req, res, next) => {
       final.push(obj);
     }
 
-    if (Object.keys(final[0]).includes("dotaMatchId")) {
+    if (final.length > 0 && Object.keys(final[0]).includes("dotaMatchId")) {
       final.sort((a, b) => a.dotaMatchId - b.dotaMatchId);
     }
 
