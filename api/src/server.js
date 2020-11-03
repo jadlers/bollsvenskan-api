@@ -245,8 +245,8 @@ app.post("/match", async (req, res, next) => {
     leagueId: Joi.number().min(0),
     season: Joi.number().min(0),
     dotaMatchId: [Joi.number(), Joi.string()],
-    diedFirstBlood: Joi.number(),
-    claimedFirstBlood: Joi.number(),
+    diedFirstBlood: Joi.number().allow(null),
+    claimedFirstBlood: Joi.number().allow(null),
     coolaStats: Joi.array().items(Joi.object()),
   });
 
