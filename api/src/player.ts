@@ -192,12 +192,14 @@ function getPlayerDotaLeagueSeasonStats(
         matchesWithStats,
         leagueSeasons,
         firstBloodMatches,
+        seasonElos,
       ] = await Promise.all([
         getBasicStatsForMatches(playerId, matches),
         getUserLeagueSeasons(playerId, leagueId),
         (await getPlayersFirstBloodMatches(playerId)).filter(
           (m) => m.leagueId === leagueId
         ),
+        getEloPerSeason(playerId, matches),
       ]);
 
       const perSeasonStats = leagueSeasons.map((season: number) => {
@@ -207,9 +209,12 @@ function getPlayerDotaLeagueSeasonStats(
         const numFirstBloods = firstBloodMatches.filter(
           (m) => m.season === season
         ).length;
+        const seasonElo = seasonElos.find((se) => se.season === season)
+          .eloRating;
         return {
           leagueId,
           season,
+          seasonElo,
           matches: seasonMatches.length,
           ...aggregateBasicDotaStats(seasonMatches),
           numFirstBloods,
@@ -311,4 +316,62 @@ function aggregateBasicDotaStats(
     assists: accumulatedStats.assists,
     deaths: accumulatedStats.deaths,
   };
+}
+
+/**
+ * Gets the elo which the player ended each season with
+ */
+function getEloPerSeason(
+  playerId: number,
+  matches: {
+    matchId: number;
+    leagueId: number;
+    season: number;
+  }[]
+): Promise<{ season: number; eloRating: number }[]> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Get dota_match_id for each match
+      const matchesWithDotaId = await Promise.all(
+        matches.map(async (m) => {
+          const matchInfo = await getMatch(m.matchId);
+          const dotaMatchId: number = parseInt(matchInfo.dota_match_id);
+          return { ...m, dotaMatchId };
+        })
+      );
+
+      // Find last match in each season
+      const lastMatchEachSeason = matchesWithDotaId.reduce((acc, val) => {
+        if (!acc[val.season]) {
+          // Not in the accumulated value, add it
+          acc[val.season] = {
+            matchId: val.matchId,
+            dotaMatchId: val.dotaMatchId,
+          };
+
+          // TODO: Find last match based on time *not* id
+        } else if (acc[val.season].dotaMatchId < val.dotaMatchId) {
+          acc[val.season].matchId = val.matchId;
+          acc[val.season].dotaMatchId = val.dotaMatchId;
+        }
+        return acc;
+      }, {});
+
+      console.log(lastMatchEachSeason);
+
+      const endOfSeasonElos = await Promise.all(
+        Object.keys(lastMatchEachSeason)
+          .map((k) => parseInt(k))
+          .map(async (season) => {
+            const matchId = lastMatchEachSeason[season].matchId;
+            const matchStats = await getUserStatsFromMatch(playerId, matchId);
+            return { season, eloRating: matchStats.elo_rating };
+          })
+      );
+
+      resolve(endOfSeasonElos);
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
