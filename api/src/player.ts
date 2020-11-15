@@ -349,15 +349,12 @@ function getEloPerSeason(
             dotaMatchId: val.dotaMatchId,
           };
 
-          // TODO: Find last match based on time *not* id
         } else if (acc[val.season].dotaMatchId < val.dotaMatchId) {
           acc[val.season].matchId = val.matchId;
           acc[val.season].dotaMatchId = val.dotaMatchId;
         }
         return acc;
       }, {});
-
-      console.log(lastMatchEachSeason);
 
       const endOfSeasonElos = await Promise.all(
         Object.keys(lastMatchEachSeason)
