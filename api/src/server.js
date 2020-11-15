@@ -6,6 +6,7 @@ import http from "http";
 import Prometheus from "prom-client";
 import socketIo from "socket.io";
 import NextcloudClient from "nextcloud-link";
+import morgan from "morgan";
 
 // Import my other modules
 import * as db from "./db.js";
@@ -19,6 +20,12 @@ const ncClient = new NextcloudClient(NEXTCLOUD_INFO);
 // Add middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// Morgan logger
+morgan.token("post-body", (req, res) =>
+  req.method === "POST" ? JSON.stringify(req.body) : ""
+);
+app.use(morgan("[:date[iso]] :url :method :status :post-body"));
 
 let server = http.createServer(app);
 
