@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 morgan.token("post-body", (req, res) =>
   req.method === "POST" ? JSON.stringify(req.body) : ""
 );
-app.use(morgan("[:date[iso]] :url :method :status :post-body"));
+app.use(morgan("[:date[iso]] :status :method :url :post-body"));
 
 let server = http.createServer(app);
 
@@ -150,11 +150,9 @@ app.get("/player/:playerId", async (req, res, next) => {
         ? await getPlayer(playerId)
         : await getDotaPlayer(playerId);
     res.json(player);
-    next();
   } catch (err) {
     console.error(`Could not get player with id ${playerId}:`, err);
     res.status(500).json({ error: "Internal server error" });
-    next();
   }
 });
 
@@ -172,11 +170,7 @@ app.get("/player", async (req, res, next) => {
     res.status(200).json({ players });
     next();
   } catch (err) {
-    console.log({
-      eventType: "DB",
-      function: "getAllUsers",
-      error: JSON.stringify(err),
-    });
+    console.log(err);
     res.status(500).json({ error: "Database error" });
     next();
   }
@@ -205,11 +199,7 @@ app.post("/player", async (req, res, next) => {
   try {
     const userId = await db.addNewUser(username);
 
-    console.log({
-      eventType: "DB",
-      function: "addNewUser",
-      message: `Added user ${username} with id ${userId}`,
-    });
+    console.log(`Added user ${username} with id ${userId}`);
 
     res.status(200).json({
       message: "User added successfully",
@@ -218,19 +208,13 @@ app.post("/player", async (req, res, next) => {
     next();
   } catch (err) {
     if (err.code === "23505") {
-      console.log({
-        eventType: "DB",
-        function: "addNewUser",
-        message: `Error: User with username '${username}' already exists`,
+      console.log(`Error: User with username '${username}' already exists`);
+      res.status(400).json({
+        message: `A user with that name (${username}) already exists`,
       });
-      res.status(400).json({ message: `A user with that name already exists` });
       next();
     } else {
-      console.log({
-        eventType: "DB",
-        function: "addNewUser",
-        err,
-      });
+      console.log(err);
       res.status(500).json({ message: "Internal server error" });
       next();
     }
@@ -273,11 +257,6 @@ app.post("/match", async (req, res, next) => {
     });
     next();
   }
-
-  console.log({
-    message: "POST /match",
-    data: JSON.stringify(verifiedBody),
-  });
 
   // All data needed is valid
   const {
@@ -353,15 +332,11 @@ app.post("/match", async (req, res, next) => {
       }
 
       await db.commitTransaction();
-      console.log({
-        eventType: "DB",
-        function: "addNewMatch",
-        message: "Updated match with information shown in data",
-        data: JSON.stringify(verifiedBody),
-      });
+      console.log(`Updated existing match (id=${matchId})`);
 
       res.status(200).json({
-        message: "Successfully updated new match",
+        message: "Successfully updated match",
+        matchId,
       });
       next();
       return;
@@ -463,12 +438,7 @@ app.post("/match", async (req, res, next) => {
     }
 
     await db.commitTransaction();
-    console.log({
-      eventType: "DB",
-      function: "addNewMatch",
-      message: "Added match with information shown in data",
-      data: JSON.stringify(verifiedBody),
-    });
+    console.log(`Added new match (id=${matchId})`);
 
     // TODO: Fix the updating of rating above
     await recalculateEloRatingForAllPlayers();
@@ -827,12 +797,6 @@ async function recalculateEloRatingForAllPlayers() {
       );
     }
 
-    // Log all users with updated eloRating
-    console.log(
-      playerData
-        .filter((player) => player.matchesPlayed > 0)
-        .sort((a, b) => a.id - b.id)
-    );
     return playerData;
   } catch (err) {
     console.log(err);
