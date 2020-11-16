@@ -25,7 +25,11 @@ app.use(bodyParser.json());
 morgan.token("post-body", (req, res) =>
   req.method === "POST" ? JSON.stringify(req.body) : ""
 );
-app.use(morgan("[:date[iso]] :status :method :url :post-body"));
+app.use(
+  morgan("[:date[iso]] :status :method :url :post-body", {
+    skip: (req, _) => req.path === "/metrics",
+  })
+);
 
 let server = http.createServer(app);
 
