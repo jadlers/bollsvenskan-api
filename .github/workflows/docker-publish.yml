@@ -18,10 +18,12 @@ jobs:
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     runs-on: ubuntu-latest
-    # if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v2
+        # Should not be necessary since `main` is the default branch
+        # with:
+        #   ref: main
 
       - name: Build image
         run: docker build api/ --file api/Dockerfile --tag $IMAGE_NAME
