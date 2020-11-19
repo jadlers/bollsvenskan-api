@@ -36,9 +36,7 @@ jobs:
         with:
           context: ./api
           file: ./api/Dockerfile
-          tags: 
-            - jadlers/$IMAGE_NAME:latest
-            - jadlers/$IMAGE_NAME:sha-${GITHUB_SHA::8}
+          tags: jadlers/$IMAGE_NAME:latest,jadlers/$IMAGE_NAME:sha-${GITHUB_SHA::8}
 
       # - name: Push image
       #   run: |
