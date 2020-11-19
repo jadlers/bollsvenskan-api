@@ -29,6 +29,12 @@ jobs:
       # - name: Build image
       #   run: docker build api/ --file api/Dockerfile --tag $IMAGE_NAME
 
+      - name: Short sha
+        id: sha8
+        run: |
+          SHA8=$(echo $GITHUB_SHA | cut -c1-8)
+          echo ::set-output name=sha8::${SHA8}
+
       - name: Log into registry
         run: echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u jadlers --password-stdin
 
@@ -39,7 +45,7 @@ jobs:
           file: ./api/Dockerfile
           tags: |
             jadlers/${{ env.IMAGE_NAME }}:latest
-            jadlers/${{ env.IMAGE_NAME }}:sha-${{ $( echo $GITHUB_SHA | cut -c1-8) }}
+            jadlers/${{ env.IMAGE_NAME }}:sha-${{ steps.sha8.outputs.sha8 }}
 
       # - name: Push image
       #   run: |
