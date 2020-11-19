@@ -25,27 +25,34 @@ jobs:
         # with:
         #   ref: main
 
-      - name: Build image
-        run: docker build api/ --file api/Dockerfile --tag $IMAGE_NAME
+      # - name: Build image
+      #   run: docker build api/ --file api/Dockerfile --tag $IMAGE_NAME
 
       - name: Log into registry
         run: echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u jadlers --password-stdin
 
-      - name: Push image
-        run: |
-          IMAGE_ID=jadlers/$IMAGE_NAME
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          tags: "$IMAGE_NAME:latest,$IMAGE_NAME:sha-${{GITHUB_SHA::8}}"
 
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+      # - name: Push image
+      #   run: |
+      #     IMAGE_ID=jadlers/$IMAGE_NAME
 
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+      #     # Strip git ref prefix from version
+      #     VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
 
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "main" ] && VERSION=latest
+      #     # Strip "v" prefix from tag name
+      #     [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
 
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
+      #     # Use Docker `latest` tag convention
+      #     [ "$VERSION" == "main" ] && VERSION=latest
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+      #     echo IMAGE_ID=$IMAGE_ID
+      #     echo VERSION=$VERSION
+
+      #     docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+      #     docker push $IMAGE_ID:$VERSION
