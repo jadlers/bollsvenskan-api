@@ -38,7 +38,7 @@ jobs:
           file: ./api/Dockerfile
           tags: |
             jadlers/${{ env.IMAGE_NAME }}:latest
-            jadlers/${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::8}
+            jadlers/${{ env.IMAGE_NAME }}:sha-$(echo $GITHUB_SHA | cut -c1-8)
 
       # - name: Push image
       #   run: |
