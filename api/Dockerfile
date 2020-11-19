@@ -1,5 +1,8 @@
 FROM node:lts-alpine
 
+# Make it possible to set timezone with env var TZ
+RUN apk add --no-cache tzdata
+
 WORKDIR /usr/src/api
 
 COPY package.json ./

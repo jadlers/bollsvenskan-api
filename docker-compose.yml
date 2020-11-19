@@ -8,6 +8,8 @@ services:
     ports:
       - "5000:${API_SERVER_PORT}"
     env_file: .env
+    environment:
+      - TZ=Europe/Stockholm
 
   db:
     image: postgres:11-alpine
@@ -18,6 +20,8 @@ services:
     ports:
       - "5432:5432"
     env_file: .env
+    environment:
+      - TZ=Europe/Stockholm
 
   adminer:
     depends_on:
@@ -26,6 +30,8 @@ services:
     restart: on-failure
     ports:
       - "8080:8080"
+    environment:
+      - TZ=Europe/Stockholm
 
   prometheus:
     image: prom/prometheus
@@ -35,6 +41,8 @@ services:
       - ./prometheus-config:/etc/prometheus
     ports:
       - "9090:9090"
+    environment:
+      - TZ=Europe/Stockholm
 
   grafana:
     depends_on:
@@ -46,6 +54,8 @@ services:
     volumes:
       - grafana-volume:/var/lib/grafana
     env_file: .env
+    environment:
+      - TZ=Europe/Stockholm
 
 
 volumes:
