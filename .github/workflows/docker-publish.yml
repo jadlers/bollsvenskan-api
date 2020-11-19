@@ -14,8 +14,7 @@ env:
   IMAGE_NAME: bollsvenskan-api
 
 jobs:
-  # Push image to GitHub Packages.
-  # See also https://docs.docker.com/docker-hub/builds/
+  # Build and push image to docker hub
   push:
     runs-on: ubuntu-latest
 
