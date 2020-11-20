@@ -8,7 +8,7 @@ WORKDIR /usr/src/api
 COPY package.json ./
 COPY yarn.lock ./
 
-RUN yarn
+RUN yarn --production
 
 COPY . .
 RUN yarn build
