@@ -185,6 +185,7 @@ function getPlayerDotaLeagueSeasonStats(
     {
       leagueId: number;
       season: number;
+      seasonElo: number;
     } & DotaBasicStats
   >
 > {
@@ -198,7 +199,7 @@ function getPlayerDotaLeagueSeasonStats(
       ]);
 
       const perSeasonStats: Array<
-        { leagueId: number; season: number } & DotaBasicStats
+        { leagueId: number; season: number; seasonElo: number } & DotaBasicStats
       > = await Promise.all(
         leagueSeasons.map(async (season: number) => {
           const seasonMatches = matchesWithStats.filter(
@@ -281,27 +282,6 @@ function getPlayerDotaMatchStats(
       reject(err);
     }
   });
-}
-
-/**
- * Returns all the matches in which the playerId died first blood.
- */
-async function getPlayersFirstBloodMatches(playerId: number) {
-  const matches = await getPlayerDotaMatches(playerId);
-  const matchesData = await Promise.all(
-    matches.map((m) => getMatch(m.matchId))
-  );
-  const firstBloodMatches = matchesData
-    .filter((m) => m.died_first_blood === playerId)
-    .map((m) => {
-      return {
-        matchId: m.id as number,
-        leagueId: m.league_id as number,
-        season: m.season as number,
-        firstBloodPlayerId: m.died_first_blood as number,
-      };
-    });
-  return firstBloodMatches;
 }
 
 /*
