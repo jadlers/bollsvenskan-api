@@ -1,4 +1,4 @@
-import { allCombinations, ratingDiff } from "../elo";
+import { allCombinations, ratingDiff } from "./elo";
 
 describe("allCombinations", () => {
   it("generates all 4 choose 2 combinations", () => {
