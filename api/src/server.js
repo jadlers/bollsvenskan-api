@@ -15,7 +15,13 @@ import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
 
 const app = express();
-const ncClient = new NextcloudClient(NEXTCLOUD_INFO);
+const nc = {}; // Not enabled if any required information is undefined
+nc.enabled = Object.values(NEXTCLOUD_INFO).includes(undefined) ? false : true;
+if (nc.enabled) {
+  nc.client = new NextcloudClient(NEXTCLOUD_INFO);
+} else {
+  console.log("Nextcloud connection not enabled, missing needed information");
+}
 
 // Add middleware
 app.use(cors());
@@ -106,16 +112,24 @@ app.get("/ping", async (req, res, next) => {
  * Returns the url of the document with all poll links as well as the url to the
  * current poll.
  */
-app.get("/dota-signup", async (req, res, next) => {
+app.get("/dota-signup", async (_, res, next) => {
+  if (!nc.enabled) {
+    res.status(501).json({ message: "Not configured by server" });
+    next();
+  }
+
   try {
-    await ncClient.checkConnectivity();
+    const connected = await nc.client.checkConnectivity();
+    if (!connected) {
+      throw new Error("Could not connect nextcloud");
+    }
 
     const signupDocumentUrl = (
-      await ncClient.shares.list("/Games/DotA/KungDota/anmalan.md")
+      await nc.client.shares.list("/Games/DotA/KungDota/anmalan.md")
     )[0].url;
 
     // Get link to signup poll
-    const signupDocument = await ncClient.get(
+    const signupDocument = await nc.client.get(
       "/Games/DotA/KungDota/anmalan.md"
     );
     const lines = signupDocument.split("\n");
