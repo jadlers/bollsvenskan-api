@@ -246,6 +246,16 @@ export function getMatchByDotaMatchId(dotaMatchId) {
   ]);
 }
 
+/* FIRST BLOOD PHRASES */
+
+export async function addNewFirstBloodPhrase(phrase, type) {
+  const res = await db.one(
+    "INSERT INTO first_blood_phrases (phrase, kind) VALUES ($1, $2) RETURNING id",
+    [phrase, type]
+  );
+  return res.id;
+}
+
 /* TEAMS */
 
 // Add new team without name and return its id
