@@ -1,0 +1,16 @@
+UPDATE users SET discord_id = '240070309862965258', discord_username = 'jadlers',            steam32id = '75463477' WHERE id = 1;
+UPDATE users SET discord_username = 'dennisthemenace_96', steam32id = '67499877' WHERE id = 2;
+UPDATE users SET discord_username = 'linus',              steam32id = '33453883' WHERE id = 3;
+UPDATE users SET discord_username = 'Wilhelm Hansson',    steam32id = '298362307' WHERE id = 4;
+UPDATE users SET discord_username = 'Cash_2Tall',         steam32id = '67717907' WHERE id = 5;
+UPDATE users SET discord_username = 'MaxBrolin',          steam32id = '33444379' WHERE id = 6;
+UPDATE users SET discord_id = '461828218119520256', discord_username = 'Kalle Ponkare',      steam32id = '23054666' WHERE id = 9;
+UPDATE users SET discord_id = '306092132110958594', discord_username = 'CrankyPancake',      steam32id = '79860065' WHERE id = 12;
+UPDATE users SET discord_id = '323512412403925003', discord_username = 'Hultarn',            steam32id = '86053882' WHERE id = 20;
+UPDATE users SET discord_username = 'Zaptard',            steam32id = '80084100' WHERE id = 21;
+UPDATE users SET discord_username = 'honken',             steam32id = '54644476' WHERE id = 22;
+UPDATE users SET discord_id = '133320150886776833', discord_username = 'ninya',              steam32id = '41691912' WHERE id = 23;
+UPDATE users SET discord_username = 'isak',               steam32id = '78047115' WHERE id = 24;
+UPDATE users SET discord_username = 'CaaaB',              steam32id = '78018083' WHERE id = 28;
+UPDATE users SET steam32id = '37209547' WHERE id = 29;
+UPDATE users SET discord_username = 'LaggZ'              WHERE id = 30;
