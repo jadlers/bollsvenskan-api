@@ -257,7 +257,7 @@ app.post("/match", async (req, res, next) => {
     winner: Joi.number().min(0).required(),
     leagueId: Joi.number().min(0),
     season: Joi.number().min(0),
-    dotaMatchId: [Joi.number(), Joi.string()],
+    dotaMatchId: [Joi.number(), Joi.string()], // TODO: Make sure it's only one number
     diedFirstBlood: Joi.number().allow(null),
     claimedFirstBlood: Joi.number().allow(null),
     coolaStats: Joi.array().items(Joi.object()),
@@ -401,7 +401,7 @@ app.post("/match", async (req, res, next) => {
       claimedFirstBlood
     );
 
-    // Add tams to the newly created match
+    // Add teams to the newly created match
     for (let i = 0; i < teamIds.length; i++) {
       const teamId = teamIds[i];
       await db.addTeamToMatch(matchId, teamId);
