@@ -13,8 +13,8 @@ interface newPhraseRequestType {
 router.post("/", async (req, res) => {
   // NOTE: The schema should always match the newPhraseRequestType
   const schema = Joi.object().keys({
-    preName: Joi.string().required(),
-    postName: Joi.string().required(),
+    preName: Joi.string().allow("").required(),
+    postName: Joi.string().allow("").required(),
     phraseType: Joi.valid("mock", "praise").required(),
   });
 
@@ -22,6 +22,18 @@ router.post("/", async (req, res) => {
     abortEarly: false,
     allowUnknown: true,
   });
+
+  // Data contains required fields
+  const data: newPhraseRequestType = value;
+
+  if (!error) {
+    if (data.preName.trim() === "" && data.postName.trim() === "") {
+      return res.status(400).json({
+        ok: false,
+        error: "Both 'preName' and 'postName' cannot me empty",
+      });
+    }
+  }
 
   if (error) {
     const errorInformation = error.details.map(
@@ -35,18 +47,14 @@ router.post("/", async (req, res) => {
     });
   }
 
-  // Data contains required fields
-  const data: newPhraseRequestType = value;
   const phrase = `${data.preName}<name>${data.postName}`;
 
   try {
     const id = await addNewFirstBloodPhrase(phrase, data.phraseType);
-    return res
-      .status(201)
-      .json({
-        ok: true,
-        message: `New ${data.phraseType} phrase added with id=${id}`,
-      });
+    return res.status(201).json({
+      ok: true,
+      message: `New ${data.phraseType} phrase added with id=${id}`,
+    });
   } catch (err) {
     console.error("Error adding new FB phrase", err);
     return res
