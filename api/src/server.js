@@ -423,6 +423,16 @@ app.post("/match", async (req, res, next) => {
       );
     }
 
+    // Randomize the firstblood phrases and add to match
+    const phrases = await db.getAllFirstBloodPhrases();
+    const mocks = phrases.filter((p) => p.kind === "mock");
+    const praises = phrases.filter((p) => p.kind === "praise");
+    // Using dotaMatchId as random value
+    const selectedMock = mocks[dotaMatchId % mocks.length];
+    const selectedPraise = praises[dotaMatchId % praises.length];
+    await db.setFirstBloodMockPhrase(matchId, selectedMock.id);
+    await db.setFirstBloodPraisePhrase(matchId, selectedPraise.id);
+
     // Update each players elo rating
     // 1. Get team average rating
     const teamRatings = teams.map((team) => {
