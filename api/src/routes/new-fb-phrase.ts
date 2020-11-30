@@ -23,18 +23,6 @@ router.post("/", async (req, res) => {
     allowUnknown: true,
   });
 
-  // Data contains required fields
-  const data: newPhraseRequestType = value;
-
-  if (!error) {
-    if (data.preName.trim() === "" && data.postName.trim() === "") {
-      return res.status(400).json({
-        ok: false,
-        error: "Both 'preName' and 'postName' cannot me empty",
-      });
-    }
-  }
-
   if (error) {
     const errorInformation = error.details.map(
       (d) => d.message.replace(/\"/g, `'`) + " "
@@ -44,6 +32,16 @@ router.post("/", async (req, res) => {
     return res.status(400).json({
       ok: false,
       error: `${error.name}: ${errorInformation}`,
+    });
+  }
+
+  // Data contains required fields
+  const data: newPhraseRequestType = value;
+  // Make sure at least one of pre/post-name is non-empty
+  if (data.preName.trim() === "" && data.postName.trim() === "") {
+    return res.status(400).json({
+      ok: false,
+      error: "Both 'preName' and 'postName' cannot be empty",
     });
   }
 
