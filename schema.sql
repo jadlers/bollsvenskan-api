@@ -51,7 +51,7 @@ CREATE TYPE fb_phrase_type AS ENUM ('mock', 'praise')
 CREATE TABLE first_blood_phrases (
     id      SERIAL              PRIMARY KEY,
     phrase  VARCHAR             NOT NULL,
-    kind    fb_phrase_type,
+    type    fb_phrase_type,
 )
 
 -- DROP TABLE IF EXISTS match_teams;

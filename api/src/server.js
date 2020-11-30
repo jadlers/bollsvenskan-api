@@ -425,8 +425,8 @@ app.post("/match", async (req, res, next) => {
 
     // Randomize the firstblood phrases and add to match
     const phrases = await db.getAllFirstBloodPhrases();
-    const mocks = phrases.filter((p) => p.kind === "mock");
-    const praises = phrases.filter((p) => p.kind === "praise");
+    const mocks = phrases.filter((p) => p.type === "mock");
+    const praises = phrases.filter((p) => p.type === "praise");
     // Using dotaMatchId as random value
     const selectedMock = mocks[dotaMatchId % mocks.length];
     const selectedPraise = praises[dotaMatchId % praises.length];

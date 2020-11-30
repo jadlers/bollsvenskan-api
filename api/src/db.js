@@ -264,7 +264,7 @@ export function getMatchByDotaMatchId(dotaMatchId) {
 
 export async function addNewFirstBloodPhrase(phrase, type) {
   const res = await db.one(
-    "INSERT INTO first_blood_phrases (phrase, kind) VALUES ($1, $2) RETURNING id",
+    "INSERT INTO first_blood_phrases (phrase, type) VALUES ($1, $2) RETURNING id",
     [phrase, type]
   );
   return res.id;
@@ -272,7 +272,7 @@ export async function addNewFirstBloodPhrase(phrase, type) {
 
 export async function getAllFirstBloodPhrases() {
   const res = await db.many("SELECT * FROM first_blood_phrases");
-  return res.map((row) => ({ id: row.id, phrase: row.phrase, kind: row.kind }));
+  return res.map((row) => ({ id: row.id, phrase: row.phrase, type: row.type }));
 }
 
 /* TEAMS */
