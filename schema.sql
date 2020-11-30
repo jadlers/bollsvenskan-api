@@ -33,13 +33,26 @@ CREATE TABLE matches (
   ID                  SERIAL       PRIMARY KEY,
   DATE                TIMESTAMP,
   score               VARCHAR(40),
-  winning_team_id     INT,
+  winning_team_id     INT          NOT NULL,
   league_id           INT,
   season              INT,
   dota_match_id       VARCHAR,
   died_first_blood    INT,
-  claimed_first_blood INT
+  claimed_first_blood INT,
+  first_blood_mock    INT,
+  first_blood_praise  INT,
+  FOREIGN KEY (first_blood_mock) REFERENCES first_blood_phrases (id)
+          ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY (first_blood_praise) REFERENCES first_blood_phrases (id)
+          ON DELETE SET NULL ON UPDATE CASCADE
 );
+
+CREATE TYPE fb_phrase_type AS ENUM ('mock', 'praise')
+CREATE TABLE first_blood_phrases (
+    id      SERIAL              PRIMARY KEY,
+    phrase  VARCHAR             NOT NULL,
+    type    fb_phrase_type,
+)
 
 -- DROP TABLE IF EXISTS match_teams;
 CREATE TABLE match_teams (

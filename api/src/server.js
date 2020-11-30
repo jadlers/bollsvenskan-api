@@ -14,6 +14,8 @@ import { SERVER_PORT, NEXTCLOUD_INFO } from "./config.ts";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
 
+import newPhraseRouter from "./routes/new-fb-phrase.ts";
+
 const app = express();
 const nc = {}; // Not enabled if any required information is undefined
 nc.enabled = Object.values(NEXTCLOUD_INFO).includes(undefined) ? false : true;
@@ -38,6 +40,8 @@ app.use(
 );
 
 let server = http.createServer(app);
+
+app.use("/new-fb-phrase", newPhraseRouter);
 
 // WebSocket action
 const io = socketIo(server);
@@ -253,7 +257,7 @@ app.post("/match", async (req, res, next) => {
     winner: Joi.number().min(0).required(),
     leagueId: Joi.number().min(0),
     season: Joi.number().min(0),
-    dotaMatchId: [Joi.number(), Joi.string()],
+    dotaMatchId: [Joi.number(), Joi.string()], // TODO: Make sure it's only one number
     diedFirstBlood: Joi.number().allow(null),
     claimedFirstBlood: Joi.number().allow(null),
     coolaStats: Joi.array().items(Joi.object()),
@@ -397,7 +401,7 @@ app.post("/match", async (req, res, next) => {
       claimedFirstBlood
     );
 
-    // Add tams to the newly created match
+    // Add teams to the newly created match
     for (let i = 0; i < teamIds.length; i++) {
       const teamId = teamIds[i];
       await db.addTeamToMatch(matchId, teamId);
@@ -418,6 +422,16 @@ app.post("/match", async (req, res, next) => {
         stats
       );
     }
+
+    // Randomize the firstblood phrases and add to match
+    const phrases = await db.getAllFirstBloodPhrases();
+    const mocks = phrases.filter((p) => p.type === "mock");
+    const praises = phrases.filter((p) => p.type === "praise");
+    // Using dotaMatchId as random value
+    const selectedMock = mocks[dotaMatchId % mocks.length];
+    const selectedPraise = praises[dotaMatchId % praises.length];
+    await db.setFirstBloodMockPhrase(matchId, selectedMock.id);
+    await db.setFirstBloodPraisePhrase(matchId, selectedPraise.id);
 
     // Update each players elo rating
     // 1. Get team average rating
@@ -539,6 +553,15 @@ app.get("/match", async (req, res, next) => {
 
       if (match.dota_match_id) {
         obj.dotaMatchId = match.dota_match_id;
+
+        // Add first blood phrases
+        const fbPhrases = await db.getAllFirstBloodPhrases();
+        obj.firstBloodMock = fbPhrases.find(
+          (phrase) => phrase.id == match.first_blood_mock
+        ).phrase;
+        obj.firstBloodPraise = fbPhrases.find(
+          (phrase) => phrase.id == match.first_blood_praise
+        ).phrase;
       }
 
       final.push(obj);

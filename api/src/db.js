@@ -202,6 +202,20 @@ export async function setClaimedFirstBlood(matchId, userId) {
   ]);
 }
 
+export async function setFirstBloodPraisePhrase(matchId, phraseId) {
+  return db.none("UPDATE matches SET first_blood_praise = $2 WHERE id = $1", [
+    matchId,
+    phraseId,
+  ]);
+}
+
+export async function setFirstBloodMockPhrase(matchId, phraseId) {
+  return db.none("UPDATE matches SET first_blood_mock = $2 WHERE id = $1", [
+    matchId,
+    phraseId,
+  ]);
+}
+
 export async function addUserToTeam(teamId, userId) {
   return await db.one(
     "INSERT INTO team_players (team_id, user_id) VALUES ($1, $2) RETURNING *",
@@ -244,6 +258,21 @@ export function getMatchByDotaMatchId(dotaMatchId) {
   return db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
     dotaMatchId,
   ]);
+}
+
+/* FIRST BLOOD PHRASES */
+
+export async function addNewFirstBloodPhrase(phrase, type) {
+  const res = await db.one(
+    "INSERT INTO first_blood_phrases (phrase, type) VALUES ($1, $2) RETURNING id",
+    [phrase, type]
+  );
+  return res.id;
+}
+
+export async function getAllFirstBloodPhrases() {
+  const res = await db.many("SELECT * FROM first_blood_phrases");
+  return res.map((row) => ({ id: row.id, phrase: row.phrase, type: row.type }));
 }
 
 /* TEAMS */
