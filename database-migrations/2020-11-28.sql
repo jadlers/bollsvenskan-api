@@ -35,7 +35,8 @@ INSERT INTO first_blood_phrases (phrase, kind) VALUES
        ('<name> lyssnade på Pontus', 'mock'),
        ('<name> kunde inte fiska, halkade i sjön', 'mock'),
        ('<name> hade handikapps-hotkeys', 'mock'),
-       ('<name> fastnade i kokaingränden', 'mock');
+       ('<name> fastnade i kokaingränden', 'mock'),
+       ('Legenden <name> fick in sista slaget', 'praise');
 
 -- Map the current values for each match and insert
 UPDATE matches SET  first_blood_mock = 8  WHERE id = 89 ;
