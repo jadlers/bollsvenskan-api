@@ -553,6 +553,15 @@ app.get("/match", async (req, res, next) => {
 
       if (match.dota_match_id) {
         obj.dotaMatchId = match.dota_match_id;
+
+        // Add first blood phrases
+        const fbPhrases = await db.getAllFirstBloodPhrases();
+        obj.firstBloodMock = fbPhrases.find(
+          (phrase) => phrase.id == match.first_blood_mock
+        ).phrase;
+        obj.firstBloodPraise = fbPhrases.find(
+          (phrase) => phrase.id == match.first_blood_praise
+        ).phrase;
       }
 
       final.push(obj);
