@@ -4,7 +4,7 @@ ALTER "winning_team_id" TYPE integer,
 ALTER "winning_team_id" DROP DEFAULT,
 ALTER "winning_team_id" SET NOT NULL,
 ADD "first_blood_mock" integer NULL,
-ADD "first_blood_praise" smallint NULL;
+ADD "first_blood_praise" integer NULL;
 COMMENT ON COLUMN "matches"."winning_team_id" IS '';
 COMMENT ON TABLE "matches" IS '';
 
