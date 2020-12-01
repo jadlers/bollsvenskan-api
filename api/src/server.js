@@ -14,7 +14,7 @@ import { SERVER_PORT, NEXTCLOUD_INFO } from "./config.ts";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
 
-import newPhraseRouter from "./routes/new-fb-phrase.ts";
+import newPhraseRouter from "./routes/fb-phrases.ts";
 
 const app = express();
 const nc = {}; // Not enabled if any required information is undefined
@@ -41,7 +41,7 @@ app.use(
 
 let server = http.createServer(app);
 
-app.use("/new-fb-phrase", newPhraseRouter);
+app.use("/fb-phrase", newPhraseRouter);
 
 // WebSocket action
 const io = socketIo(server);

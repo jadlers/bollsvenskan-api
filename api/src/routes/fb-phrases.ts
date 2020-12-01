@@ -1,6 +1,6 @@
 import Joi from "@hapi/joi";
 import express from "express";
-import { addNewFirstBloodPhrase } from "../db.js";
+import { addNewFirstBloodPhrase, getAllFirstBloodPhrases } from "../db.js";
 
 const router = express.Router();
 
@@ -9,6 +9,19 @@ interface newPhraseRequestType {
   postName: string;
   phraseType: "mock" | "praise";
 }
+
+/**
+ * Get all firstblood phrases in the database
+ */
+router.get("/", async (_, res) => {
+  try {
+    const phrases = await getAllFirstBloodPhrases();
+    res.status(200).json({ ok: true, data: phrases });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Internal server error" });
+  }
+});
 
 router.post("/", async (req, res) => {
   // NOTE: The schema should always match the newPhraseRequestType
