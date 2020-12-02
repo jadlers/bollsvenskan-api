@@ -6,7 +6,8 @@ import http from "http";
 import Prometheus from "prom-client";
 import socketIo from "socket.io";
 import NextcloudClient from "nextcloud-link";
-import morgan from "morgan";
+
+import logger from "./middleware/logging";
 
 // Import my other modules
 import * as db from "./db.js";
@@ -28,16 +29,7 @@ if (nc.enabled) {
 // Add middleware
 app.use(cors());
 app.use(bodyParser.json());
-
-// Morgan logger
-morgan.token("post-body", (req, res) =>
-  req.method === "POST" ? JSON.stringify(req.body) : ""
-);
-app.use(
-  morgan("[:date[iso]] :status :method :url :post-body", {
-    skip: (req, _) => req.path === "/metrics",
-  })
-);
+app.use(logger);
 
 let server = http.createServer(app);
 
