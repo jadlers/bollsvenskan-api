@@ -3,11 +3,11 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import http from "http";
-import Prometheus from "prom-client";
 import socketIo from "socket.io";
 import NextcloudClient from "nextcloud-link";
 
 import logger from "./middleware/logging";
+import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 
 // Import my other modules
 import * as db from "./db.js";
@@ -30,6 +30,8 @@ if (nc.enabled) {
 app.use(cors());
 app.use(bodyParser.json());
 app.use(logger);
+app.use(monitoring);
+app.get("/metrics", monitoringEndpoint);
 
 let server = http.createServer(app);
 
@@ -67,34 +69,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`Client closed connection`);
   });
-});
-
-// Monitoring
-Prometheus.collectDefaultMetrics();
-
-const httpRequestDurationMicroseconds = new Prometheus.Histogram({
-  name: "http_request_duration_ms",
-  help: "Duration of HTTP requests in ms",
-  labelNames: ["method", "route", "status_code"],
-  buckets: [0.1, 5, 15, 50, 100, 200, 500, 1000, 2000, 5000],
-});
-
-const httpRequestTotal = new Prometheus.Counter({
-  name: "http_request_total",
-  help: "Number of HTTP requests processed",
-  labelNames: ["method", "route", "status_code"],
-});
-
-// Start monitoring
-app.use((req, res, next) => {
-  res.locals.startEpoch = Date.now();
-  next();
-});
-
-// Add endpoint for metrics
-app.get("/metrics", (req, res) => {
-  res.set("Content-Type", Prometheus.register.contentType);
-  res.end(Prometheus.register.metrics());
 });
 
 app.get("/ping", async (req, res, next) => {
@@ -841,18 +815,6 @@ app.use((req, res, next) => {
   if (!res.headersSent) {
     res.status(404).send("Sorry can't find that!");
   }
-
-  next();
-});
-
-// Register time taken for request before responding
-app.use((req, res, next) => {
-  const responseTimeInMs = Date.now() - res.locals.startEpoch;
-  httpRequestDurationMicroseconds
-    .labels(req.method, req.path, res.statusCode)
-    .observe(responseTimeInMs);
-
-  httpRequestTotal.labels(req.method, req.path, res.statusCode).inc();
 
   next();
 });
