@@ -27,8 +27,7 @@ const httpRequestTotal = new Prometheus.Counter({
 const monitoring = (req, res, next) => {
   res.locals.startEpoch = Date.now(); // Start timer
 
-  onFinished(res, (err, res) => {
-    console.log("monitoring finishing res");
+  onFinished(res, (_err, res) => {
     const responseTimeInMs = Date.now() - res.locals.startEpoch;
     httpRequestDurationMicroseconds
       .labels(req.method, req.path, res.statusCode)
