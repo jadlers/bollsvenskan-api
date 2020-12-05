@@ -27,6 +27,13 @@ CREATE TABLE team_players (
           ON DELETE SET NULL ON UPDATE CASCADE
 );
 
+CREATE TYPE fb_phrase_type AS ENUM ('mock', 'praise');
+CREATE TABLE first_blood_phrases (
+    id      SERIAL              PRIMARY KEY,
+    phrase  VARCHAR             NOT NULL,
+    type    fb_phrase_type
+);
+
 -- There could be a single teams column with a CSV list of team ID's
 -- DROP TABLE IF EXISTS matches;
 CREATE TABLE matches (
@@ -46,13 +53,6 @@ CREATE TABLE matches (
   FOREIGN KEY (first_blood_praise) REFERENCES first_blood_phrases (id)
           ON DELETE SET NULL ON UPDATE CASCADE
 );
-
-CREATE TYPE fb_phrase_type AS ENUM ('mock', 'praise')
-CREATE TABLE first_blood_phrases (
-    id      SERIAL              PRIMARY KEY,
-    phrase  VARCHAR             NOT NULL,
-    type    fb_phrase_type,
-)
 
 -- DROP TABLE IF EXISTS match_teams;
 CREATE TABLE match_teams (
