@@ -5,25 +5,22 @@ import express from "express";
 import http from "http";
 import Prometheus from "prom-client";
 import socketIo from "socket.io";
-import NextcloudClient from "nextcloud-link";
 import morgan from "morgan";
+import webdav from "webdav";
 
 // Import my other modules
 import * as db from "./db.js";
-import { SERVER_PORT, NEXTCLOUD_INFO } from "./config.ts";
+import { SERVER_PORT, NEXTCLOUD } from "./config.ts";
 import { createBalancedTeams, ratingDiff } from "./elo.ts";
 import { getPlayer, getDotaPlayer } from "./player.ts";
 
 import newPhraseRouter from "./routes/fb-phrases.ts";
 
 const app = express();
-const nc = {}; // Not enabled if any required information is undefined
-nc.enabled = Object.values(NEXTCLOUD_INFO).includes(undefined) ? false : true;
-if (nc.enabled) {
-  nc.client = new NextcloudClient(NEXTCLOUD_INFO);
-} else {
-  console.log("Nextcloud connection not enabled, missing needed information");
-}
+const ncDotaSignupLinks = webdav.createClient(
+  "https://nextcloud.jacobadlers.com/public.php/webdav",
+  { username: NEXTCLOUD.signupShareCode }
+);
 
 // Add middleware
 app.use(cors());
@@ -117,27 +114,19 @@ app.get("/ping", async (req, res, next) => {
  * current poll.
  */
 app.get("/dota-signup", async (_, res, next) => {
-  if (!nc.enabled) {
+  if (!NEXTCLOUD.signupShareCode) {
     res.status(501).json({ message: "Not configured by server" });
-    next();
+    return next();
   }
 
   try {
-    const connected = await nc.client.checkConnectivity();
-    if (!connected) {
-      throw new Error("Could not connect nextcloud");
-    }
-
-    const signupDocumentUrl = (
-      await nc.client.shares.list("/Games/DotA/KungDota/anmalan.md")
-    )[0].url;
-
-    // Get link to signup poll
-    const signupDocument = await nc.client.get(
-      "/Games/DotA/KungDota/anmalan.md"
-    );
+    const signupDocumentUrl = `https://nextcloud.jacobadlers.com/index.php/s/${NEXTCLOUD.signupShareCode}'`;
+    const signupDocument = await ncDotaSignupLinks.getFileContents("/", {
+      format: "text",
+    });
     const lines = signupDocument.split("\n");
     const pollUrlRegex = /^\*[^~]+<(.+)>/;
+
     // Find the first line with a url that is not crossed out
     const linkLine = lines.find((line) => {
       let res = line.match(pollUrlRegex);
