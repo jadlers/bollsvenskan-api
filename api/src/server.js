@@ -37,6 +37,7 @@ app.use(logger);
 app.use(monitoring);
 app.get("/metrics", monitoringEndpoint);
 
+// Add routes
 app.use("/fb-phrase", newPhraseRouter);
 app.use("/match", matchRoutes);
 app.use("/player", playerRoutes);
@@ -107,16 +108,3 @@ app.use((req, res, next) => {
 server.listen(SERVER_PORT, () =>
   console.log(`Server started on port: ${SERVER_PORT}`)
 );
-
-// TODO Get matches from a single league
-// app.get("/league/:leagueId", async (req, res, next) => {
-//   const leagueId = req.params.leagueId;
-//   console.log(leagueId);
-
-//   try {
-//     const matches = await getMatchesFromLeague(leagueId);
-//     res.status(200).json({ matches });
-//   } catch (error) {
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
