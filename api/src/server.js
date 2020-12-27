@@ -3,32 +3,26 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import http from "http";
+import webdav from "webdav";
 
 import logger from "./middleware/logging";
 import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
-import webdav from "webdav";
 
 // Import my other modules
 import * as db from "./db.js";
 import { SERVER_PORT, NEXTCLOUD } from "./config.ts";
 import connectSocketIo from "./socketio.js";
 import { getPlayer, getDotaPlayer } from "./player.ts";
-import { recalculateEloRatingForAllPlayers } from "./quickfix.js";
 
 // Routes
-import newPhraseRouter from "./routes/fb-phrases.ts";
 import matchRoutes from "./routes/matchRoutes.js";
 import playerRoutes from "./routes/playerRoutes.js";
 import leagueRoutes from "./routes/leagueRoutes.js";
+import variousDotaRoutes from "./routes/variousDotaRoutes.ts";
 
 const app = express();
 let server = http.createServer(app);
 const io = connectSocketIo(server);
-
-const ncDotaSignupLinks = webdav.createClient(
-  "https://nextcloud.jacobadlers.com/public.php/webdav",
-  { username: NEXTCLOUD.signupShareCode }
-);
 
 // Add middleware
 app.use(cors());
@@ -38,10 +32,10 @@ app.use(monitoring);
 app.get("/metrics", monitoringEndpoint);
 
 // Add routes
-app.use("/fb-phrase", newPhraseRouter);
 app.use("/match", matchRoutes);
 app.use("/player", playerRoutes);
 app.use("/league", leagueRoutes);
+app.use("/dota", variousDotaRoutes);
 
 app.get("/ping", async (req, res, next) => {
   res.status(200).json({ message: "Pong!" });
@@ -49,12 +43,19 @@ app.get("/ping", async (req, res, next) => {
 });
 
 /** Dota signup */
+const ncDotaSignupLinks = webdav.createClient(
+  "https://nextcloud.jacobadlers.com/public.php/webdav",
+  { username: NEXTCLOUD.signupShareCode }
+);
 
 /**
  * Returns the url of the document with all poll links as well as the url to the
  * current poll.
+ *
+ * TODO: Move this into the variousDotaRoutes file, not really compatible with
+ * typescript atm so couldn not make it compile now.
  */
-app.get("/dota-signup", async (_, res, next) => {
+app.get("/dota/signup", async (_, res, next) => {
   if (!NEXTCLOUD.signupShareCode) {
     res.status(501).json({ message: "Not configured by server" });
     return next();
@@ -79,20 +80,6 @@ app.get("/dota-signup", async (_, res, next) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Could not get info from nextcloud" });
-  }
-});
-
-// NOTE: Careful, this should be locked and only available for admins
-app.get("/recalculate-elo-for-all-players", async (req, res, next) => {
-  try {
-    const updatedData = await recalculateEloRatingForAllPlayers();
-    updatedData.sort((a, b) => a.id - b.id);
-    res.status(200).json({ message: "Success!", data: updatedData });
-    next();
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("Nope");
-    next();
   }
 });
 
