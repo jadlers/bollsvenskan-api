@@ -239,6 +239,7 @@ router.post("/", async (req, res, next) => {
 
     res.status(200).json({
       message: "Successfully added new match",
+      matchId,
     });
     next();
   } catch (error) {
