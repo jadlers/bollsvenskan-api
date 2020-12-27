@@ -1,9 +1,26 @@
+import { Router } from "express";
 import Joi from "@hapi/joi";
-import express from "express";
+
 import { addNewFirstBloodPhrase, getAllFirstBloodPhrases } from "../db.js";
+import { recalculateEloRatingForAllPlayers } from "../quickfix.js";
 
-const router = express.Router();
+const router = Router();
 
+// NOTE: This should be locked and only available for admins, useful at times
+router.get("/recalculate-elo-for-all-players", async (req, res, next) => {
+  try {
+    const updatedData = await recalculateEloRatingForAllPlayers();
+    updatedData.sort((a, b) => a.id - b.id);
+    res.status(200).json({ message: "Success!", data: updatedData });
+    next();
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Nope");
+    next();
+  }
+});
+
+/** First blood mock phrases */
 interface newPhraseRequestType {
   preName: string;
   postName: string;
@@ -13,7 +30,7 @@ interface newPhraseRequestType {
 /**
  * Get all firstblood phrases in the database
  */
-router.get("/", async (_, res) => {
+router.get("/fb-phrase", async (_, res) => {
   try {
     const phrases = await getAllFirstBloodPhrases();
     res.status(200).json({ ok: true, data: phrases });
@@ -23,7 +40,7 @@ router.get("/", async (_, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/fb-phrase", async (req, res) => {
   // NOTE: The schema should always match the newPhraseRequestType
   const schema = Joi.object().keys({
     preName: Joi.string().allow("").required(),

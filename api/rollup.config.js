@@ -7,6 +7,18 @@ export default {
     dir: "build",
     format: "es",
   },
-  plugins: [typescript()]
+  plugins: [typescript()],
+  external: [
+    "@hapi/joi",
+    "body-parser",
+    "cors",
+    "express",
+    "http",
+    "morgan",
+    "on-finished",
+    "pg-promise",
+    "prom-client",
+    "socket.io",
+    "webdav",
+  ],
 };
-
