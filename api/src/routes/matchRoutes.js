@@ -254,6 +254,37 @@ router.post("/", async (req, res, next) => {
 // TODO: Return a single match
 // app.get("/match/:matchId", async (req, res, next) => {
 
+router.get("/od-fetch/all", async (req, res, next) => {
+  try {
+    let matches = await db.getAllMatchesFromLeague(2);
+
+    matches = matches.filter((m) => m.date === null);
+    const initialNullDates = matches.length;
+    matches.splice(50); // Keep first 50 elements
+
+    console.log(
+      "Updating matches (maximum 50, 60 api calls/min limit):",
+      matches.map((m) => m.id)
+    );
+    await Promise.all(
+      matches.map(async (m) => {
+        const matchId = m.id;
+        return await setPlayTime(matchId);
+      })
+    );
+
+    return res.status(200).json({
+      msg: `Successfully set time played for 50 matches. ${Math.max(
+        0,
+        initialNullDates - 50
+      )} remain without date.`,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+});
+
 router.get("/od-fetch/:matchId", async (req, res, next) => {
   const matchId = parseInt(req.params.matchId);
   if (!matchId) {
