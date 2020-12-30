@@ -6,6 +6,8 @@ const {
   DATABASE_URL,
 
   NEXTCLOUD_SIGNUP_SHARE_CODE,
+
+  OPENDOTA_API_KEY,
 } = process.env;
 
 export const SERVER_PORT = Number(process.env.API_SERVER_PORT) || 5000;
@@ -17,3 +19,5 @@ export const DATABASE_CONNECTION_URL =
 export const NEXTCLOUD = {
   signupShareCode: NEXTCLOUD_SIGNUP_SHARE_CODE,
 };
+
+export { OPENDOTA_API_KEY };
