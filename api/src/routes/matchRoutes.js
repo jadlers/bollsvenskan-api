@@ -235,6 +235,8 @@ router.post("/", async (req, res, next) => {
     await db.commitTransaction();
     console.log(`Added new match (id=${matchId})`);
 
+    setPlayTime(matchId);
+
     // TODO: Fix the updating of rating above
     await recalculateEloRatingForAllPlayers();
 
