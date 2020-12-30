@@ -42,6 +42,7 @@
     "webdav": "^3.6.1"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.5.7",
     "concurrently": "^5.2.0",
     "jest": "^26.1.0",
     "nodemon": "^2.0.2",
@@ -50,7 +51,9 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "setupFiles": ["dotenv/config"]
+    "setupFiles": [
+      "dotenv/config"
+    ]
   },
   "prettier": {
     "singleQuote": false

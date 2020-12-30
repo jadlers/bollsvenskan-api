@@ -4,6 +4,7 @@ import Joi from "@hapi/joi";
 import * as db from "../db.js";
 import { ratingDiff } from "../elo.ts";
 import { recalculateEloRatingForAllPlayers } from "../quickfix.js";
+import { setPlayTime } from "../match.ts";
 
 const router = express.Router();
 
@@ -252,6 +253,27 @@ router.post("/", async (req, res, next) => {
 
 // TODO: Return a single match
 // app.get("/match/:matchId", async (req, res, next) => {
+
+router.get("/od-fetch/:matchId", async (req, res, next) => {
+  const matchId = parseInt(req.params.matchId);
+  if (!matchId) {
+    res.status(400).json({
+      ok: false,
+      message: `Invalid match id '${req.params.matchId}'. Must be the id of a stored match.`,
+    });
+    return next();
+  }
+
+  try {
+    const datetime = await setPlayTime(matchId);
+    return res.status(200).json({
+      msg: `Updated time played for match ${matchId} to: ${datetime}`,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Return all matches
 router.get("/", async (req, res, next) => {
