@@ -15,6 +15,7 @@ export default {
     "express",
     "http",
     "morgan",
+    "node-fetch",
     "on-finished",
     "pg-promise",
     "prom-client",
