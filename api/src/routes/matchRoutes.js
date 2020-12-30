@@ -4,6 +4,7 @@ import Joi from "@hapi/joi";
 import * as db from "../db.js";
 import { ratingDiff } from "../elo.ts";
 import { recalculateEloRatingForAllPlayers } from "../quickfix.js";
+import { setPlayTime } from "../match.ts";
 
 const router = express.Router();
 
@@ -234,6 +235,8 @@ router.post("/", async (req, res, next) => {
     await db.commitTransaction();
     console.log(`Added new match (id=${matchId})`);
 
+    setPlayTime(matchId);
+
     // TODO: Fix the updating of rating above
     await recalculateEloRatingForAllPlayers();
 
@@ -252,6 +255,58 @@ router.post("/", async (req, res, next) => {
 
 // TODO: Return a single match
 // app.get("/match/:matchId", async (req, res, next) => {
+
+router.get("/od-fetch/all", async (req, res, next) => {
+  try {
+    let matches = await db.getAllMatchesFromLeague(2);
+
+    matches = matches.filter((m) => m.date === null);
+    const initialNullDates = matches.length;
+    matches.splice(50); // Keep first 50 elements
+
+    console.log(
+      "Updating matches (maximum 50, 60 api calls/min limit):",
+      matches.map((m) => m.id)
+    );
+    await Promise.all(
+      matches.map(async (m) => {
+        const matchId = m.id;
+        return await setPlayTime(matchId);
+      })
+    );
+
+    return res.status(200).json({
+      msg: `Successfully set time played for 50 matches. ${Math.max(
+        0,
+        initialNullDates - 50
+      )} remain without date.`,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+});
+
+router.get("/od-fetch/:matchId", async (req, res, next) => {
+  const matchId = parseInt(req.params.matchId);
+  if (!matchId) {
+    res.status(400).json({
+      ok: false,
+      message: `Invalid match id '${req.params.matchId}'. Must be the id of a stored match.`,
+    });
+    return next();
+  }
+
+  try {
+    const datetime = await setPlayTime(matchId);
+    return res.status(200).json({
+      msg: `Updated time played for match ${matchId} to: ${datetime}`,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Return all matches
 router.get("/", async (req, res, next) => {
@@ -305,6 +360,7 @@ router.get("/", async (req, res, next) => {
 
       let obj = {
         matchId: match.id,
+        date: match.date,
         teams,
         winner: match.winner,
         score: scoreArr,

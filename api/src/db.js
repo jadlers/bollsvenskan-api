@@ -260,6 +260,13 @@ export function getMatchByDotaMatchId(dotaMatchId) {
   ]);
 }
 
+export async function setPlayedDateTime(matchId, datetime) {
+  return db.none("UPDATE matches SET date = $2 WHERE id = $1", [
+    matchId,
+    datetime,
+  ]);
+}
+
 /* FIRST BLOOD PHRASES */
 
 export async function addNewFirstBloodPhrase(phrase, type) {
