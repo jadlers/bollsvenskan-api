@@ -275,7 +275,7 @@ router.get("/od-fetch/all", async (req, res, next) => {
       })
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       msg: `Successfully set time played for 50 matches. ${Math.max(
         0,
         initialNullDates - 50
@@ -283,7 +283,7 @@ router.get("/od-fetch/all", async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ msg: "Internal server error" });
+    res.status(500).json({ msg: "Internal server error" });
   }
 });
 
@@ -299,12 +299,12 @@ router.get("/od-fetch/:matchId", async (req, res, next) => {
 
   try {
     const datetime = await setPlayTime(matchId);
-    return res.status(200).json({
+    res.status(200).json({
       msg: `Updated time played for match ${matchId} to: ${datetime}`,
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
