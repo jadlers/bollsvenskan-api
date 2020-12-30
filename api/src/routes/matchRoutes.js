@@ -358,6 +358,7 @@ router.get("/", async (req, res, next) => {
 
       let obj = {
         matchId: match.id,
+        date: match.date,
         teams,
         winner: match.winner,
         score: scoreArr,
