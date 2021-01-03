@@ -1,5 +1,6 @@
 // import typescript from "@rollup/plugin-typescript";
 import typescript from "rollup-plugin-typescript2";
+import jsonModule from "@rollup/plugin-json";
 
 export default {
   input: "src/server.js",
@@ -7,7 +8,7 @@ export default {
     dir: "build",
     format: "es",
   },
-  plugins: [typescript()],
+  plugins: [typescript(), jsonModule()],
   external: [
     "@hapi/joi",
     "body-parser",
