@@ -1,5 +1,8 @@
-import { getMatch, timePlayed, dateTimeFormat } from "./opendota";
+import { getMatch, timePlayed, heroesPlayed } from "./opendota";
 import mockMatch from "../../lastmatch-opendota.json";
+
+import { endDbConnection } from "../db";
+afterAll(() => endDbConnection());
 
 describe("getMatch", () => {
   it("fetches mock correctly", async () => {
@@ -37,5 +40,17 @@ describe("Getting match play time", () => {
     const matchId = 5751025193;
     const res = await timePlayed(matchId);
     expect(res).toEqual("0020-12-20 20:57:18");
+  });
+});
+
+describe("Heroes played", () => {
+  it("Finds the account_id and hero_id", async () => {
+    const playedHeroes = await heroesPlayed(null, mockMatch);
+    // {userId: 23, heroId: 52}
+    expect(playedHeroes).toContainEqual({
+      steamId: 41691912,
+      userId: 23,
+      heroId: 52,
+    });
   });
 });

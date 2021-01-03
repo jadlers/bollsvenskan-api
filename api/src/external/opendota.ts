@@ -1,9 +1,11 @@
 import fetch from "node-fetch";
 
 import { OPENDOTA_API_KEY } from "../config";
+import { getPlayerBySteamId } from "../player";
 
 interface OpenDotaMatch {
   start_time: number;
+  players: { account_id: number; hero_id: number }[];
   [x: string]: any;
 }
 
@@ -40,6 +42,34 @@ export function dateTimeFormat(d: Date): String {
 
   return `${date} ${time}`;
 }
+
+/**
+ * Extracts the hero played by each player in the match.
+ */
+export async function heroesPlayed(
+  matchId: number,
+  odData: OpenDotaMatch = null
+): Promise<{ userId: number; steamId: number; heroId: number }[]> {
+  odData = await fetchMatchIfMissing(matchId, odData);
+
+  const heroData = await Promise.all(
+    odData.players.map(async (p) => {
+      try {
+        const user = await getPlayerBySteamId(p.account_id);
+        return {
+          userId: user.id,
+          steamId: p.account_id,
+          heroId: p.hero_id,
+        };
+      } catch (err) {
+        return { userId: 25, steamId: p.account_id, heroId: p.hero_id };
+      }
+    })
+  );
+
+  return heroData;
+}
+
 async function fetchMatchIfMissing(
   matchId: number,
   obj: OpenDotaMatch | null
