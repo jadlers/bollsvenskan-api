@@ -26,14 +26,7 @@ export async function timePlayed(
   matchId: number,
   odData: OpenDotaMatch = null
 ): Promise<String> {
-  if (!odData) {
-    try {
-      odData = await getMatch(matchId);
-    } catch (err) {
-      console.error("Could not fetch match from opendota", err);
-      return Promise.reject();
-    }
-  }
+  odData = await fetchMatchIfMissing(matchId, odData);
 
   // Extract the date
   const unixtime = odData.start_time * 1000;
@@ -46,4 +39,18 @@ export function dateTimeFormat(d: Date): String {
   const time = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
 
   return `${date} ${time}`;
+}
+async function fetchMatchIfMissing(
+  matchId: number,
+  obj: OpenDotaMatch | null
+): Promise<OpenDotaMatch> {
+  if (!obj) {
+    try {
+      obj = await getMatch(matchId);
+    } catch (err) {
+      console.error("Could not fetch match from opendota", err);
+      return Promise.reject();
+    }
+  }
+  return obj;
 }
