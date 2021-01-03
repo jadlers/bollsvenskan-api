@@ -1,6 +1,7 @@
 import {
   getUser,
   getUserMatches,
+  getUserBySteamId,
   getUserStatsFromMatch,
   getUserLeagueSeasons,
   getMatch,
@@ -104,6 +105,14 @@ export function getDotaPlayer(playerId: number): Promise<DotaPlayer> {
       reject(err);
     }
   });
+}
+
+/**
+ * Returns the player with given steamId if exists, otherwise rejects
+ */
+export async function getPlayerBySteamId(steamId: number): Promise<Player> {
+  const player = await getUserBySteamId(steamId);
+  return player;
 }
 
 /*******************************
