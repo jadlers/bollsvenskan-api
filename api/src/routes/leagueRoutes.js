@@ -1,7 +1,7 @@
 import express from "express";
 import Joi from "@hapi/joi";
 
-import * as db from "../db";
+import * as db from "../db.ts";
 
 const router = express.Router();
 
