@@ -2,8 +2,14 @@
 // operation and no logic.
 import pgp from "pg-promise";
 
-import { DATABASE_CONNECTION_URL } from "./config.ts";
+import { Player } from "./player";
+
+import { DATABASE_CONNECTION_URL } from "./config";
 const db = pgp(/* initialization options */)(DATABASE_CONNECTION_URL);
+
+export function endDbConnection() {
+  db.$pool.end();
+}
 
 /* TRANSACTIONS */
 export async function beginTransaction() {
@@ -27,6 +33,25 @@ export function getUser(userId) {
   return db.one("SELECT * FROM users WHERE id = $1", [userId]);
 }
 
+export async function getUserBySteamId(steamId: number): Promise<Player> {
+  const row = await db.oneOrNone(
+    "SELECT * FROM users WHERE steam32id = $1",
+    `${steamId}`
+  );
+  if (!row) {
+    return Promise.reject(`No user with steam32id=${steamId} exist`);
+  }
+  const player: Player = {
+    id: row.id,
+    username: row.username,
+    eloRating: row.elo_rating,
+    steam32id: row.steam32id,
+    discordId: row.discord_id,
+    discordUsername: row.discord_username,
+  };
+  return player;
+}
+
 export function setUserEloRating(userId, newRating) {
   return db.any("UPDATE users SET elo_rating = $2 WHERE id = $1", [
     userId,
@@ -44,46 +69,47 @@ export function getNumberOfMatchesInLeague(userId, leagueId) {
 /**
  * Returns a list of matches the user has played in.
  */
-export function getUserMatches(userId) {
-  return new Promise(async (resolve, reject) => {
-    const res = await db.manyOrNone(
-      `SELECT m.id, m.league_id, m.season
+export async function getUserMatches(
+  userId: number
+): Promise<{ matchId: number; leagueId: number; season: number }[]> {
+  const res = await db.manyOrNone(
+    `SELECT m.id, m.league_id, m.season
         FROM matches m
         JOIN match_teams mt ON m.id = mt.match_id
         JOIN team_players tp ON mt.team_id = tp.team_id
         WHERE user_id = $1`,
-      [userId]
-    );
-
-    resolve(
-      res.map((match) => {
-        return {
-          matchId: match.id,
-          leagueId: match.league_id,
-          season: match.season,
-        };
-      })
-    );
+    [userId]
+  );
+  const arr = res.map((match) => {
+    return {
+      matchId: match.id as number,
+      leagueId: match.league_id as number,
+      season: match.season as number,
+    };
   });
+  return arr;
 }
 
 /**
  * Returns a list of the seasons in the league which the user participated in.
  */
-export function getUserLeagueSeasons(userId, leagueId) {
-  return new Promise(async (resolve, reject) => {
-    db.manyOrNone(
-      `SELECT DISTINCT m.season
+export async function getUserLeagueSeasons(
+  userId: number,
+  leagueId: number
+): Promise<number[]> {
+  const rows: { season: number }[] = await db.manyOrNone(
+    `SELECT DISTINCT m.season
         FROM matches m
         JOIN match_teams mt ON m.id = mt.match_id
         JOIN team_players tp ON mt.team_id = tp.team_id
         WHERE user_id = $1
         AND league_id = $2`,
-      [userId, leagueId]
-    )
-      .then((rows) => resolve(rows.map((r) => r.season)))
-      .catch((err) => reject(err));
-  });
+    [userId, leagueId]
+  );
+  if (!rows) {
+    return Promise.reject();
+  }
+  return rows.map((r) => r.season);
 }
 
 /**

@@ -4,7 +4,7 @@ import {
   getUserStatsFromMatch,
   getUserLeagueSeasons,
   getMatch,
-} from "./db.js";
+} from "./db";
 import { removeNullEntries } from "./util";
 
 export type Player = {

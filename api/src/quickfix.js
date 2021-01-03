@@ -2,7 +2,7 @@
  * The goal is for this file to be empty at all times.
  */
 
-import * as db from "./db.js";
+import * as db from "./db";
 import { ratingDiff } from "./elo.ts";
 
 /**
