@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import { OPENDOTA_API_KEY } from "../config";
 import { getPlayerBySteamId } from "../player";
 
-interface OpenDotaMatch {
+export interface OpenDotaMatch {
   start_time: number;
   players: { account_id: number; hero_id: number }[];
   [x: string]: any;

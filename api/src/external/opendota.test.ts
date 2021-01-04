@@ -43,14 +43,24 @@ describe("Getting match play time", () => {
   });
 });
 
-describe("Heroes played", () => {
-  it("Finds the account_id and hero_id", async () => {
+describe("heroesPlayed", () => {
+  it("finds the account_id and hero_id for existing hero", async () => {
     const playedHeroes = await heroesPlayed(null, mockMatch);
     // {userId: 23, heroId: 52}
     expect(playedHeroes).toContainEqual({
       steamId: 41691912,
       userId: 23,
       heroId: 52,
+    });
+  });
+
+  it("gives standin userId for non-found users", async () => {
+    const playedHeroes = await heroesPlayed(null, mockMatch);
+
+    expect(playedHeroes).toContainEqual({
+      steamId: 92698518,
+      userId: 25,
+      heroId: 43,
     });
   });
 });
