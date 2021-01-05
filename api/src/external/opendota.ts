@@ -9,12 +9,12 @@ export interface OpenDotaMatch {
   [x: string]: any;
 }
 
-export async function getMatch(matchId: number): Promise<OpenDotaMatch> {
-  const url = new URL(`api/matches/${matchId}`, "https://api.opendota.com");
+export async function getMatch(dotaMatchId: number): Promise<OpenDotaMatch> {
+  const url = new URL(`api/matches/${dotaMatchId}`, "https://api.opendota.com");
   url.searchParams.append("api_key", OPENDOTA_API_KEY);
   const res = await fetch(url.href);
   if (res.ok) {
-    const parsed = await res.json();
+    const parsed: OpenDotaMatch = await res.json();
     return parsed;
   }
   return Promise.reject(await res.json());
