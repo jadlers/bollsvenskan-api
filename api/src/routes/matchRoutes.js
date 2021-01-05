@@ -4,7 +4,7 @@ import Joi from "@hapi/joi";
 import * as db from "../db.ts";
 import { ratingDiff } from "../elo.ts";
 import { recalculateEloRatingForAllPlayers } from "../quickfix.js";
-import { setPlayTime } from "../match.ts";
+import { fetchAllOpenDotaInfo } from "../match.ts";
 
 const router = express.Router();
 
@@ -235,7 +235,7 @@ router.post("/", async (req, res, next) => {
     await db.commitTransaction();
     console.log(`Added new match (id=${matchId})`);
 
-    setPlayTime(matchId);
+    fetchAllOpenDotaInfo(matchId);
 
     // TODO: Fix the updating of rating above
     await recalculateEloRatingForAllPlayers();
@@ -264,22 +264,20 @@ router.get("/od-fetch/all", async (req, res, next) => {
     const initialNullDates = matches.length;
     matches.splice(50); // Keep first 50 elements
 
+    if (matches.length === 0) {
+      return res.status(200).json({ msg: "No match is missing information." });
+    }
+
     console.log(
       "Updating matches (maximum 50, 60 api calls/min limit):",
       matches.map((m) => m.id)
     );
-    await Promise.all(
-      matches.map(async (m) => {
-        const matchId = m.id;
-        return await setPlayTime(matchId);
-      })
-    );
+    await Promise.all(matches.map((m) => fetchAllOpenDotaInfo(m.id)));
 
     res.status(200).json({
-      msg: `Successfully set time played for 50 matches. ${Math.max(
-        0,
-        initialNullDates - 50
-      )} remain without date.`,
+      msg: `Successfully updated open-dota data for ${
+        matches.length
+      } matches. ${Math.max(0, initialNullDates - 50)} remain without date.`,
     });
   } catch (err) {
     console.error(err);
@@ -298,9 +296,10 @@ router.get("/od-fetch/:matchId", async (req, res, next) => {
   }
 
   try {
-    const datetime = await setPlayTime(matchId);
+    const [datetime, heroesPlayed] = await fetchAllOpenDotaInfo(matchId);
     res.status(200).json({
-      msg: `Updated time played for match ${matchId} to: ${datetime}`,
+      msg: `Updated time played for match ${matchId} to: ${datetime}. Also updated the heroes for each player according to 'heroesPlayed'.`,
+      heroesPlayed,
     });
   } catch (err) {
     console.log(err);

@@ -286,6 +286,17 @@ export async function addStatsForUserToMatch(
   );
 }
 
+export async function setPlayedHeroesInMatch(
+  matchId: number,
+  userId: number,
+  heroId: number
+) {
+  await db.oneOrNone(
+    "UPDATE user_match_stats SET dota_hero_id = $3 WHERE match_id = $1 AND user_id = $2",
+    [matchId, userId, heroId]
+  );
+}
+
 export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
   return db.any(
     "UPDATE user_match_stats SET elo_rating = $3 WHERE match_id = $1 AND user_id = $2",
@@ -293,7 +304,7 @@ export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
   );
 }
 
-export function getMatchByDotaMatchId(dotaMatchId) {
+export function getMatchByDotaMatchId(dotaMatchId: number) {
   return db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
     dotaMatchId,
   ]);
