@@ -62,6 +62,10 @@ export async function heroesPlayed(
           heroId: p.hero_id,
         };
       } catch (err) {
+        // NOTE: For Pontus second account
+        if (p.account_id === 115345354) {
+          return { userId: 20, steamId: p.account_id, heroId: p.hero_id };
+        }
         return { userId: 25, steamId: p.account_id, heroId: p.hero_id };
       }
     })
