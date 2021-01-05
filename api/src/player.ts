@@ -306,7 +306,7 @@ function getPlayerFirstBloodStats(
       const firstBloodData = await Promise.all(
         matches.map(async (match) => {
           const matchData = await getMatch(match.matchId);
-          return [matchData.died_first_blood, matchData.claimed_first_blood];
+          return [matchData.diedFirstBlood, matchData.claimedFirstBlood];
         })
       );
       const res: [number, number] = [0, 0];
@@ -362,7 +362,7 @@ function getEloPerSeason(
       const matchesWithDotaId = await Promise.all(
         matches.map(async (m) => {
           const matchInfo = await getMatch(m.matchId);
-          const dotaMatchId: number = parseInt(matchInfo.dota_match_id);
+          const dotaMatchId: number = matchInfo.dotaMatchId;
           return { ...m, dotaMatchId };
         })
       );

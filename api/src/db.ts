@@ -171,8 +171,21 @@ export async function getAllMatches() {
   return await db.any("SELECT * FROM matches WHERE league_id = 2");
 }
 
-export async function getMatch(matchId) {
-  return await db.one("SELECT * FROM matches WHERE id = $1", [matchId]);
+export async function getMatch(matchId: number) {
+  const row = await db.one("SELECT * FROM matches WHERE id = $1", matchId);
+  return {
+    id: row.id as number,
+    date: row.date as number,
+    score: row.score as string,
+    winningTeamId: row.winning_team_id as number,
+    leagueId: row.winning_team_id as number,
+    dotaMatchId: parseInt(row.dota_match_id),
+    season: row.season as number,
+    claimedFirstBlood: row.claimed_first_blood as number,
+    diedFirstBlood: row.died_first_blood as number,
+    firstBloodMock: row.first_blood_mock as number,
+    firstBloodPraise: row.first_blood_praise as number,
+  };
 }
 
 export async function addNewMatch(

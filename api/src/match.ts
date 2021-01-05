@@ -3,8 +3,8 @@ import { timePlayed } from "./external/opendota";
 
 export async function setPlayTime(matchId: number): Promise<String> {
   try {
-    const match = await getMatch(matchId);
-    const datetime = await timePlayed(match.dota_match_id);
+    const { dotaMatchId } = await getMatch(matchId);
+    const datetime = await timePlayed(dotaMatchId, openDotaData);
     await setPlayedDateTime(matchId, datetime);
     return datetime;
   } catch (err) {
