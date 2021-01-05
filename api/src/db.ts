@@ -304,10 +304,24 @@ export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
   );
 }
 
-export function getMatchByDotaMatchId(dotaMatchId: number) {
+export async function getMatchByDotaMatchId(dotaMatchId: number) {
   return db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
     dotaMatchId,
   ]);
+}
+
+export async function getMatchesMissingOpenDotaInfo() {
+  const rows: { id: number }[] = await db.manyOrNone(`
+    SELECT DISTINCT m.id
+    FROM matches m
+    JOIN user_match_stats ums
+      ON m.id = ums.match_id
+    WHERE league_id = 2 AND (
+      m.date IS NULL OR
+      ums.dota_hero_id IS NULL
+    )
+    ORDER BY m.id`);
+  return rows.map((r) => r.id);
 }
 
 export async function setPlayedDateTime(matchId, datetime) {

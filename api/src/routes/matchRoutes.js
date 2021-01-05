@@ -258,26 +258,25 @@ router.post("/", async (req, res, next) => {
 
 router.get("/od-fetch/all", async (req, res, next) => {
   try {
-    let matches = await db.getAllMatchesFromLeague(2);
+    let matchIds = await db.getMatchesMissingOpenDotaInfo();
 
-    matches = matches.filter((m) => m.date === null);
-    const initialNullDates = matches.length;
-    matches.splice(50); // Keep first 50 elements
+    const initialNumMatches = matchIds.length;
+    matchIds.splice(50); // Keep first 50 elements
 
-    if (matches.length === 0) {
+    if (matchIds.length === 0) {
       return res.status(200).json({ msg: "No match is missing information." });
     }
 
     console.log(
       "Updating matches (maximum 50, 60 api calls/min limit):",
-      matches.map((m) => m.id)
+      matchIds
     );
-    await Promise.all(matches.map((m) => fetchAllOpenDotaInfo(m.id)));
+    await Promise.all(matchIds.map((matchId) => fetchAllOpenDotaInfo(matchId)));
 
     res.status(200).json({
       msg: `Successfully updated open-dota data for ${
-        matches.length
-      } matches. ${Math.max(0, initialNullDates - 50)} remain without date.`,
+        matchIds.length
+      } matches. ${Math.max(0, initialNumMatches - 50)} remain without date.`,
     });
   } catch (err) {
     console.error(err);
