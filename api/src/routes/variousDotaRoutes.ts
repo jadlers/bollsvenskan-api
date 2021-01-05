@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Joi from "@hapi/joi";
 
-import { addNewFirstBloodPhrase, getAllFirstBloodPhrases } from "../db.js";
+import { addNewFirstBloodPhrase, getAllFirstBloodPhrases } from "../db";
 import { recalculateEloRatingForAllPlayers } from "../quickfix.js";
 
 const router = Router();

@@ -78,6 +78,7 @@ CREATE TABLE user_match_stats (
        sentries_placed INT,
        sentries_destroyed INT,
        fantasy_points DOUBLE PRECISION,
+       dota_hero_id SMALLINT,
        PRIMARY KEY (user_id, match_id),
        FOREIGN KEY (user_id) REFERENCES users (id)
                ON DELETE SET NULL ON UPDATE CASCADE,

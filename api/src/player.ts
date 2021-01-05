@@ -1,10 +1,11 @@
 import {
   getUser,
   getUserMatches,
+  getUserBySteamId,
   getUserStatsFromMatch,
   getUserLeagueSeasons,
   getMatch,
-} from "./db.js";
+} from "./db";
 import { removeNullEntries } from "./util";
 
 export type Player = {
@@ -104,6 +105,14 @@ export function getDotaPlayer(playerId: number): Promise<DotaPlayer> {
       reject(err);
     }
   });
+}
+
+/**
+ * Returns the player with given steamId if exists, otherwise rejects
+ */
+export async function getPlayerBySteamId(steamId: number): Promise<Player> {
+  const player = await getUserBySteamId(steamId);
+  return player;
 }
 
 /*******************************
@@ -297,7 +306,7 @@ function getPlayerFirstBloodStats(
       const firstBloodData = await Promise.all(
         matches.map(async (match) => {
           const matchData = await getMatch(match.matchId);
-          return [matchData.died_first_blood, matchData.claimed_first_blood];
+          return [matchData.diedFirstBlood, matchData.claimedFirstBlood];
         })
       );
       const res: [number, number] = [0, 0];
@@ -353,7 +362,7 @@ function getEloPerSeason(
       const matchesWithDotaId = await Promise.all(
         matches.map(async (m) => {
           const matchInfo = await getMatch(m.matchId);
-          const dotaMatchId: number = parseInt(matchInfo.dota_match_id);
+          const dotaMatchId: number = matchInfo.dotaMatchId;
           return { ...m, dotaMatchId };
         })
       );

@@ -9,7 +9,6 @@ import logger from "./middleware/logging";
 import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 
 // Import my other modules
-import * as db from "./db.js";
 import { SERVER_PORT, NEXTCLOUD } from "./config.ts";
 import connectSocketIo from "./socketio.js";
 import { getPlayer, getDotaPlayer } from "./player.ts";
