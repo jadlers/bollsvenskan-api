@@ -24,7 +24,6 @@
     "@types/hapi__joi": "^17.1.2",
     "@types/jest": "^26.0.0",
     "@types/node-fetch": "^2.5.7",
-    "@types/node-fetch": "^2.5.7",
     "@types/socket.io": "^2.1.8",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -53,7 +52,9 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "setupFiles": ["dotenv/config"]
+    "setupFiles": [
+      "dotenv/config"
+    ]
   },
   "prettier": {
     "singleQuote": false
