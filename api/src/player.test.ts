@@ -1,5 +1,4 @@
 import { getPlayerBySteamId } from "./player";
-// import mockMatch from "../../lastmatch-opendota.json";
 
 import { endDbConnection } from "./db";
 afterAll(() => endDbConnection());

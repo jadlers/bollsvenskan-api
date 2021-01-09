@@ -1,5 +1,5 @@
 import { getMatch, timePlayed, heroesPlayed } from "./opendota";
-import mockMatch from "../../lastmatch-opendota.json";
+import mockMatch from "./match.mock.json";
 
 import { endDbConnection } from "../db";
 afterAll(() => endDbConnection());
