@@ -5,7 +5,8 @@ import { endDbConnection } from "../db";
 afterAll(() => endDbConnection());
 
 describe("getMatch", () => {
-  it("fetches mock correctly", async () => {
+  // TODO: Stub the fetch call with mock data
+  it.skip("fetches mock correctly", async () => {
     const matchId = 5760754589;
     const res = await getMatch(matchId);
     expect(res).toEqual(mockMatch);
