@@ -5,7 +5,7 @@ morgan.token("post-body", (req, _) =>
 );
 
 morgan.token("authorized-user", (req, _) =>
-  req.authorizedUser ? `authUser(${req.authorizedUser})` : "noAuth"
+  req.authorizedUser ? `authUser(${req.authorizedUser.username})` : "noAuth"
 );
 
 const logger = morgan(
