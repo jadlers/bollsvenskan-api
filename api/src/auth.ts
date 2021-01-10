@@ -1,16 +1,20 @@
+import { Request, Response, NextFunction } from "express";
 import * as db from "./db";
 
 /**
  * Checks that a valid API key is sent with the request.
  */
-export async function isAuthorized(req, res, next) {
-  const apiKey = req.query.api_key;
+export async function isAuthorized(
+  req: Request & { authorizedUser: any },
+  res: Response,
+  next: NextFunction
+) {
+  const apiKey = req.query.api_key as string;
   if (!apiKey) {
     res.status(401);
     return next("No API key provided");
   }
 
-  // TODO: Check if the given key is valid
   try {
     const user = await db.getUserByApiKey(apiKey);
     req.authorizedUser = user;
