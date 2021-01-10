@@ -4,6 +4,7 @@ CREATE TABLE users (
   full_name        VARCHAR(80),
   username         VARCHAR(50)    NOT NULL        UNIQUE,
   password         VARCHAR(140),
+  api_key          VARCHAR(40)    UNIQUE,
   elo_rating       INT            DEFAULT 1500, -- Current rating
   steam32id        VARCHAR(12)    UNIQUE,
   discord_id       VARCHAR(22)    UNIQUE,
