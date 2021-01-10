@@ -3,6 +3,7 @@
 import pgp from "pg-promise";
 
 import { Player } from "./player";
+import { UserEntity } from "./db/entities";
 
 import { DATABASE_CONNECTION_URL } from "./config";
 const db = pgp(/* initialization options */)(DATABASE_CONNECTION_URL);
@@ -25,31 +26,41 @@ export async function rollbackTransaction() {
 }
 
 /* USERS */
+
+function userRowToObj(row: any): UserEntity {
+  return {
+    id: row.id as number,
+    username: row.username as string,
+    password: row.password as string,
+    apiKey: row.api_key as string,
+    fullName: row.full_name as string,
+    eloRating: row.elo_rating as number,
+    steam32id: row.steam32id as string,
+    discordId: row.discord_id as string,
+    discordUsername: row.discord_username as string,
+  };
+}
+
 export function getAllUsers() {
   return db.any("SELECT * FROM users");
 }
 
-export function getUser(userId) {
-  return db.one("SELECT * FROM users WHERE id = $1", [userId]);
+export async function getUser(userId: number): Promise<UserEntity> {
+  const row = await db.one("SELECT * FROM users WHERE id = $1", [userId]);
+  return userRowToObj(row);
 }
 
-export async function getUserBySteamId(steamId: number): Promise<Player> {
+export async function getUserBySteamId(steamId: number): Promise<UserEntity> {
   const row = await db.oneOrNone(
     "SELECT * FROM users WHERE steam32id = $1",
     `${steamId}`
   );
+
   if (!row) {
-    return Promise.reject(`No user with steam32id=${steamId} exist`);
+    throw new Error(`No user with steam32id=${steamId} exist`);
   }
-  const player: Player = {
-    id: row.id,
-    username: row.username,
-    eloRating: row.elo_rating,
-    steam32id: row.steam32id,
-    discordId: row.discord_id,
-    discordUsername: row.discord_username,
-  };
-  return player;
+
+  return userRowToObj(row);
 }
 
 export function setUserEloRating(userId, newRating) {
