@@ -1,8 +1,14 @@
 import express from "express";
 import Joi from "@hapi/joi";
 
+import { isAuthorized } from "../auth.ts";
 import * as db from "../db.ts";
-import { getPlayer, getDotaPlayer, stripSecrets } from "../player.ts";
+import {
+  getPlayer,
+  getDotaPlayer,
+  updatePlayer,
+  stripSecrets,
+} from "../player.ts";
 
 const router = express.Router();
 
@@ -96,6 +102,43 @@ router.post("/", async (req, res, next) => {
       res.status(500).json({ message: "Internal server error" });
       next();
     }
+  }
+});
+
+// Update single player
+router.put("/:playerId", isAuthorized, async (req, res, next) => {
+  const playerId = parseInt(req.params.playerId);
+  if (!playerId) {
+    res.status(400);
+    return next(`Invalid player id '${req.params.playerId}'.`);
+  }
+
+  // null allowed for nullable columns in DB
+  const schema = Joi.object().keys({
+    username: Joi.string(),
+    eloRating: Joi.number().allow(null),
+    discordId: Joi.string().allow(null),
+    discordUsername: Joi.string().allow(null),
+    steam32id: Joi.string().allow(null),
+  });
+
+  const { value: validData, error } = schema.validate(req.body, {
+    abortEarly: false,
+  });
+  if (error) {
+    res.status(400);
+    return next(error.message);
+  }
+
+  try {
+    const updatedPlayer = await updatePlayer({ id: playerId, ...validData });
+    res.status(200).json({
+      message: `Updated player with id=${playerId}`,
+      player: stripSecrets(updatedPlayer),
+    });
+    next();
+  } catch (err) {
+    next(err);
   }
 });
 
