@@ -2,7 +2,7 @@ import express from "express";
 import Joi from "@hapi/joi";
 
 import * as db from "../db.ts";
-import { getPlayer, getDotaPlayer } from "../player.ts";
+import { getPlayer, getDotaPlayer, stripSecrets } from "../player.ts";
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ router.get("/:playerId", async (req, res, next) => {
       type === "base"
         ? await getPlayer(playerId)
         : await getDotaPlayer(playerId);
-    res.json(player);
+    res.json(stipSecrets(player));
   } catch (err) {
     console.error(`Could not get player with id ${playerId}:`, err);
     res.status(500).json({ error: "Internal server error" });
@@ -38,7 +38,11 @@ router.get("/", async (req, res, next) => {
   try {
     const rows = await db.getAllUsers();
     const players = await Promise.all(
-      rows.map((r) => (type === "base" ? getPlayer(r.id) : getDotaPlayer(r.id)))
+      rows.map(async (r) => {
+        let player =
+          type === "base" ? await getPlayer(r.id) : await getDotaPlayer(r.id);
+        return stripSecrets(player);
+      })
     );
 
     res.status(200).json({ players });

@@ -41,8 +41,10 @@ function userRowToObj(row: any): UserEntity {
   };
 }
 
-export function getAllUsers() {
-  return db.any("SELECT * FROM users");
+export async function getAllUsers(): Promise<UserEntity[]> {
+  const rows = await db.many("SELECT * FROM users");
+  const users = rows.map((r) => userRowToObj(r));
+  return users;
 }
 
 export async function getUser(userId: number): Promise<UserEntity> {

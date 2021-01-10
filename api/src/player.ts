@@ -97,6 +97,16 @@ export async function getPlayerBySteamId(steamId: number): Promise<Player> {
   return player;
 }
 
+/**
+ * Removes sensitive data of a user which should not be included in any response.
+ */
+export function stripSecrets(user: UserEntity) {
+  const secretProperties = ["password", "apiKey"];
+  for (const prop of secretProperties) {
+    delete user[prop];
+  }
+  return user;
+}
 /*******************************
  * Unexported helper functions *
  *******************************/
