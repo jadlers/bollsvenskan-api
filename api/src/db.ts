@@ -84,6 +84,28 @@ export function getNumberOfMatchesInLeague(userId, leagueId) {
   );
 }
 
+export async function updatePlayer(player: Player) {
+  await db.none(
+    `UPDATE users SET
+       username = $2,
+       full_name = $3,
+       elo_rating = $4,
+       steam32id = $5,
+       discord_id = $6,
+       discord_username = $7
+     WHERE id = $1`,
+    [
+      player.id,
+      player.username,
+      player.fullName,
+      player.eloRating,
+      player.steam32id,
+      player.discordId,
+      player.discordUsername,
+    ]
+  );
+}
+
 /**
  * Returns a list of matches the user has played in.
  */

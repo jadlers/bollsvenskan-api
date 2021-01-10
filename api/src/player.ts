@@ -4,6 +4,7 @@ import {
   getUserBySteamId,
   getUserStatsFromMatch,
   getUserLeagueSeasons,
+  updatePlayer as dbUpdatePlayer,
   getMatch,
 } from "./db";
 import { UserEntity } from "./db/entities";
@@ -95,6 +96,23 @@ export function getDotaPlayer(playerId: number): Promise<DotaPlayer> {
 export async function getPlayerBySteamId(steamId: number): Promise<Player> {
   const player = await getUserBySteamId(steamId);
   return player;
+}
+
+/**
+ * Merges the currently stored player with the provided one
+ * and stores in DB.
+ */
+export async function updatePlayer(player: Player): Promise<Player> {
+  const currentUser = await getPlayer(player.id);
+  const newUser = { ...currentUser, ...player };
+
+  try {
+    await dbUpdatePlayer(newUser);
+    return newUser;
+  } catch (err) {
+    console.log(err);
+    return Promise.reject("Error updating player in database");
+  }
 }
 
 /**
