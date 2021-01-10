@@ -17,7 +17,7 @@ describe("Get player with steam32id", () => {
     try {
       await getPlayerBySteamId(missingId);
     } catch (err) {
-      expect(err).toMatch(`No user`);
+      expect(err.message).toMatch(`No user`);
     }
     done();
   });

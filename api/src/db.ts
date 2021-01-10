@@ -3,6 +3,7 @@
 import pgp from "pg-promise";
 
 import { Player } from "./player";
+import { UserEntity } from "./db/entities";
 
 import { DATABASE_CONNECTION_URL } from "./config";
 const db = pgp(/* initialization options */)(DATABASE_CONNECTION_URL);
@@ -25,31 +26,48 @@ export async function rollbackTransaction() {
 }
 
 /* USERS */
-export function getAllUsers() {
-  return db.any("SELECT * FROM users");
+
+function userRowToObj(row: any): UserEntity {
+  return {
+    id: row.id as number,
+    username: row.username as string,
+    password: row.password as string,
+    apiKey: row.api_key as string,
+    fullName: row.full_name as string,
+    eloRating: row.elo_rating as number,
+    steam32id: row.steam32id as string,
+    discordId: row.discord_id as string,
+    discordUsername: row.discord_username as string,
+  };
 }
 
-export function getUser(userId) {
-  return db.one("SELECT * FROM users WHERE id = $1", [userId]);
+export async function getAllUsers(): Promise<UserEntity[]> {
+  const rows = await db.many("SELECT * FROM users");
+  const users = rows.map((r) => userRowToObj(r));
+  return users;
 }
 
-export async function getUserBySteamId(steamId: number): Promise<Player> {
+export async function getUser(userId: number): Promise<UserEntity> {
+  const row = await db.one("SELECT * FROM users WHERE id = $1", [userId]);
+  return userRowToObj(row);
+}
+
+export async function getUserBySteamId(steamId: number): Promise<UserEntity> {
   const row = await db.oneOrNone(
     "SELECT * FROM users WHERE steam32id = $1",
     `${steamId}`
   );
+
   if (!row) {
-    return Promise.reject(`No user with steam32id=${steamId} exist`);
+    throw new Error(`No user with steam32id=${steamId} exist`);
   }
-  const player: Player = {
-    id: row.id,
-    username: row.username,
-    eloRating: row.elo_rating,
-    steam32id: row.steam32id,
-    discordId: row.discord_id,
-    discordUsername: row.discord_username,
-  };
-  return player;
+
+  return userRowToObj(row);
+}
+
+export async function getUserByApiKey(apiKey: string): Promise<UserEntity> {
+  const row = await db.one("SELECT * FROM users WHERE api_key = $1", apiKey);
+  return userRowToObj(row);
 }
 
 export function setUserEloRating(userId, newRating) {
@@ -63,6 +81,28 @@ export function getNumberOfMatchesInLeague(userId, leagueId) {
   return db.one(
     "SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1",
     [userId, leagueId]
+  );
+}
+
+export async function updatePlayer(player: Player) {
+  await db.none(
+    `UPDATE users SET
+       username = $2,
+       full_name = $3,
+       elo_rating = $4,
+       steam32id = $5,
+       discord_id = $6,
+       discord_username = $7
+     WHERE id = $1`,
+    [
+      player.id,
+      player.username,
+      player.fullName,
+      player.eloRating,
+      player.steam32id,
+      player.discordId,
+      player.discordUsername,
+    ]
   );
 }
 

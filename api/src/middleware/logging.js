@@ -1,11 +1,18 @@
 import morgan from "morgan";
 
 morgan.token("post-body", (req, _) =>
-  req.method === "POST" ? JSON.stringify(req.body) : ""
+  ["POST", "PUT"].includes(req.method) ? JSON.stringify(req.body) : ""
 );
 
-const logger = morgan("[:date[iso]] :status :method :url :post-body", {
-  skip: (req, _) => req.path === "/metrics",
-});
+morgan.token("authorized-user", (req, _) =>
+  req.authorizedUser ? `authUser(${req.authorizedUser.username})` : "noAuth"
+);
+
+const logger = morgan(
+  "[:date[iso]] :status :method :url :authorized-user :post-body",
+  {
+    skip: (req, _) => req.path === "/metrics",
+  }
+);
 
 export default logger;

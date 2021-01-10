@@ -4,8 +4,10 @@ import {
   getUserBySteamId,
   getUserStatsFromMatch,
   getUserLeagueSeasons,
+  updatePlayer as dbUpdatePlayer,
   getMatch,
 } from "./db";
+import { UserEntity } from "./db/entities";
 import { removeNullEntries } from "./util";
 
 export type Player = {
@@ -54,26 +56,7 @@ const DOTA_LEAGUE_IDS = [2];
 export function getPlayer(playerId: number): Promise<Player> {
   return new Promise(async (resolve, reject) => {
     try {
-      const {
-        id,
-        username,
-        full_name: fullName,
-        elo_rating: eloRating,
-        steam32id,
-        discord_id: discordId,
-        discord_username: discordUsername,
-      } = await getUser(playerId);
-
-      let player: Player = {
-        id: id as number,
-        username: username as string,
-        fullName: fullName as string,
-        eloRating: eloRating as number,
-        steam32id: steam32id as string,
-        discordId: discordId as string,
-        discordUsername: discordUsername as string,
-      };
-
+      let player: Player = await getUser(playerId);
       player = removeNullEntries(player) as Player;
       resolve(player);
     } catch (err) {
@@ -115,6 +98,33 @@ export async function getPlayerBySteamId(steamId: number): Promise<Player> {
   return player;
 }
 
+/**
+ * Merges the currently stored player with the provided one
+ * and stores in DB.
+ */
+export async function updatePlayer(player: Player): Promise<Player> {
+  const currentUser = await getPlayer(player.id);
+  const newUser = { ...currentUser, ...player };
+
+  try {
+    await dbUpdatePlayer(newUser);
+    return newUser;
+  } catch (err) {
+    console.log(err);
+    return Promise.reject("Error updating player in database");
+  }
+}
+
+/**
+ * Removes sensitive data of a user which should not be included in any response.
+ */
+export function stripSecrets(user: UserEntity) {
+  const secretProperties = ["password", "apiKey"];
+  for (const prop of secretProperties) {
+    delete user[prop];
+  }
+  return user;
+}
 /*******************************
  * Unexported helper functions *
  *******************************/
