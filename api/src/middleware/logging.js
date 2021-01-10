@@ -1,7 +1,7 @@
 import morgan from "morgan";
 
 morgan.token("post-body", (req, _) =>
-  req.method === "POST" ? JSON.stringify(req.body) : ""
+  ["POST", "PUT"].includes(req.method) ? JSON.stringify(req.body) : ""
 );
 
 morgan.token("authorized-user", (req, _) =>
