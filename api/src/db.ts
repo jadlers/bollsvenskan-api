@@ -63,6 +63,11 @@ export async function getUserBySteamId(steamId: number): Promise<UserEntity> {
   return userRowToObj(row);
 }
 
+export async function getUserByApiKey(apiKey: string): Promise<UserEntity> {
+  const row = await db.one("SELECT * FROM users WHERE api_key = $1", apiKey);
+  return userRowToObj(row);
+}
+
 export function setUserEloRating(userId, newRating) {
   return db.any("UPDATE users SET elo_rating = $2 WHERE id = $1", [
     userId,

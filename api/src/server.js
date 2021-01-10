@@ -12,6 +12,7 @@ import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 import { SERVER_PORT, NEXTCLOUD } from "./config.ts";
 import connectSocketIo from "./socketio.js";
 import { getPlayer, getDotaPlayer } from "./player.ts";
+import { isAuthorized } from "./auth.ts";
 
 // Routes
 import matchRoutes from "./routes/matchRoutes.js";
@@ -89,6 +90,13 @@ app.use((req, res, next) => {
   }
 
   next();
+});
+
+app.use((err, _req, res, _next) => {
+  if (res.statusCode === 200) {
+    res.status(500); // Add generic error
+  }
+  res.json({ error: err });
 });
 
 server.listen(SERVER_PORT, () =>
