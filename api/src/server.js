@@ -1,4 +1,3 @@
-import Joi from "@hapi/joi";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
@@ -11,8 +10,6 @@ import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 // Import my other modules
 import { SERVER_PORT, NEXTCLOUD } from "./config.ts";
 import connectSocketIo from "./socketio.js";
-import { getPlayer, getDotaPlayer } from "./player.ts";
-import { isAuthorized } from "./auth.ts";
 
 // Routes
 import matchRoutes from "./routes/matchRoutes.js";

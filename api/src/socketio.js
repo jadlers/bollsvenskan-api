@@ -23,7 +23,7 @@ export default function addSocketIo(server) {
       // Check if message which we're waiting for with teams
       if (msg.type === "BROADCAST_TEAMS") {
         console.log("Slowly revealing following teams: ", msg.teams);
-        sendTeamsWithTension(msg.teams); // Should still function
+        sendTeamsWithTension(io, msg.teams);
       } else {
         // Broadcast all other messages sent
         socket.send(JSON.stringify({ title: `Broadcasting:`, message: msg }));
@@ -44,7 +44,7 @@ export default function addSocketIo(server) {
  *
  * @param {Object} finalTeams Teams to be revealed
  */
-function sendTeamsWithTension(finalTeams) {
+function sendTeamsWithTension(io, finalTeams) {
   const timeout = 2000;
   // The JSON object updated and sent
   let broadcast = {

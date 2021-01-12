@@ -2,6 +2,7 @@ import express from "express";
 import Joi from "@hapi/joi";
 
 import * as db from "../db.ts";
+import { createBalancedTeams } from "../elo.ts";
 
 const router = express.Router();
 
@@ -71,7 +72,7 @@ router.post("/:leagueId/create-teams", async (req, res, next) => {
       return {
         id: player.id,
         name: player.username,
-        rating: player.elo_rating,
+        rating: player.eloRating,
       };
     });
 
