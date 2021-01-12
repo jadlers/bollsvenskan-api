@@ -5,7 +5,7 @@ import * as db from "./db";
  * Checks that a valid API key is sent with the request.
  */
 export async function isAuthorized(
-  req: Request & { authorizedUser: any },
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
@@ -17,7 +17,7 @@ export async function isAuthorized(
 
   try {
     const user = await db.getUserByApiKey(apiKey);
-    req.authorizedUser = user;
+    res.locals.user = user;
   } catch (_) {
     const error = `The API key '${apiKey}' is not valid.`;
     res.status(401);
