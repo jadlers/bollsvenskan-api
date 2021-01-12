@@ -1,5 +1,6 @@
 import bodyParser from "body-parser";
 import cors from "cors";
+import compression from "compression";
 import express from "express";
 import http from "http";
 import webdav from "webdav";
@@ -24,6 +25,7 @@ const io = connectSocketIo(server);
 // Add middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(compression());
 app.use(logger);
 app.use(monitoring);
 app.get("/metrics", monitoringEndpoint);

@@ -12,6 +12,7 @@ export default {
   external: [
     "@hapi/joi",
     "body-parser",
+    "compression",
     "cors",
     "express",
     "http",
