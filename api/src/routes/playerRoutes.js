@@ -29,7 +29,7 @@ router.get("/:playerId", async (req, res, next) => {
       type === "base"
         ? await getPlayer(playerId)
         : await getDotaPlayer(playerId);
-    res.json(stipSecrets(player));
+    res.json(stripSecrets(player));
   } catch (err) {
     console.error(`Could not get player with id ${playerId}:`, err);
     res.status(500).json({ error: "Internal server error" });

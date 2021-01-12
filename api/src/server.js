@@ -20,7 +20,7 @@ import variousDotaRoutes from "./routes/variousDotaRoutes.ts";
 
 const app = express();
 let server = http.createServer(app);
-const io = connectSocketIo(server);
+connectSocketIo(server);
 
 // Add middleware
 app.use(cors());
