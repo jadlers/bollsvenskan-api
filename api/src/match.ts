@@ -1,10 +1,23 @@
-import { getMatch, setPlayedDateTime, setPlayedHeroesInMatch } from "./db";
+import { MatchEntity } from "./db/entities";
+import {
+  getMatch,
+  setPlayedDateTime,
+  setPlayedHeroesInMatch,
+  getDeletedMatchesFromLeague,
+} from "./db";
 import {
   timePlayed,
   heroesPlayed,
   OpenDotaMatch,
   getMatch as getOpenDotaMatch,
 } from "./external/opendota";
+
+export async function getDeletedMatches(
+  leagueId: number
+): Promise<MatchEntity[]> {
+  const matches = getDeletedMatchesFromLeague(leagueId);
+  return matches;
+}
 
 export async function fetchAllOpenDotaInfo(
   matchId: number,

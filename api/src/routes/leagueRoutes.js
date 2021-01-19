@@ -3,6 +3,7 @@ import Joi from "@hapi/joi";
 
 import * as db from "../db.ts";
 import { createBalancedTeams } from "../elo.ts";
+import { getDeletedMatches } from "../match.ts";
 
 const router = express.Router();
 
@@ -84,6 +85,23 @@ router.post("/:leagueId/create-teams", async (req, res, next) => {
   } catch (err) {
     console.log(err);
     res.status(500).send();
+  }
+});
+
+router.get("/:leagueId/deleted-matches", async (req, res, next) => {
+  try {
+    const leagueId = parseInt(req.params.leagueId);
+    if (isNaN(leagueId)) {
+      res.status(400);
+      return next(
+        `Incorrect league in endpoint. '${req.params.leagueId}' must be a leagueId, i.e. a numeric value.`
+      );
+    }
+
+    const matches = await getDeletedMatches(leagueId);
+    res.status(501).json({ matches });
+  } catch (err) {
+    return next(err);
   }
 });
 
