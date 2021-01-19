@@ -39,6 +39,7 @@ CREATE TABLE first_blood_phrases (
 -- DROP TABLE IF EXISTS matches;
 CREATE TABLE matches (
   ID                  SERIAL       PRIMARY KEY,
+  is_deleted          BOOLEAN      NOT NULL DEFAULT false,
   DATE                TIMESTAMP,
   score               VARCHAR(40),
   winning_team_id     INT          NOT NULL,

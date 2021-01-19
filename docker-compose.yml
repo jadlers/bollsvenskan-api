@@ -2,9 +2,10 @@ version: '3.5'
 
 services:
   api_server:
+    image: jadlers/bollsvenskan-api:latest
+    restart: unless-stopped
     depends_on:
       - db
-    image: jadlers/bollsvenskan-api:latest
     ports:
       - "5000:${API_SERVER_PORT}"
     env_file: .env
@@ -13,7 +14,7 @@ services:
 
   db:
     image: postgres:11-alpine
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./database/data:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d
@@ -24,10 +25,10 @@ services:
       - TZ=Europe/Stockholm
 
   adminer:
+    image: adminer:latest
+    restart: unless-stopped
     depends_on:
       - db
-    image: adminer:latest
-    restart: on-failure
     ports:
       - "8080:8080"
     environment:
