@@ -99,7 +99,7 @@ router.get("/:leagueId/deleted-matches", async (req, res, next) => {
     }
 
     const matches = await getDeletedMatches(leagueId);
-    res.status(501).json({ matches });
+    res.status(200).json({ matches });
   } catch (err) {
     return next(err);
   }
