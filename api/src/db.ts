@@ -457,6 +457,14 @@ export async function getLastDotaMatchIdFromLeague(leagueId) {
   });
 }
 
+export async function getDeletedMatchesFromLeague(leagueId: number) {
+  const rows = await db.manyOrNone(
+    `SELECT * FROM matches WHERE league_id = $1 AND is_deleted`,
+    leagueId
+  );
+  return rows.map((row) => matchRowToObj(row));
+}
+
 // TODO: The temporary league should be deleted but for "real" leagues
 // `is_deleted` should be set to true. For now there is a block in the endpoint
 // handler.
