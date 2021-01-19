@@ -3,7 +3,7 @@
 import pgp from "pg-promise";
 
 import { Player } from "./player";
-import { UserEntity } from "./db/entities";
+import { MatchEntity, UserEntity } from "./db/entities";
 
 import { DATABASE_CONNECTION_URL } from "./config";
 const db = pgp(/* initialization options */)(DATABASE_CONNECTION_URL);
@@ -214,6 +214,23 @@ export async function addTeamToMatch(matchId, teamId) {
 }
 
 /* MATCHES */
+
+function matchRowToObj(row: any): MatchEntity {
+  return {
+    id: row.id,
+    isDeleted: row.is_deleted,
+    date: row.date,
+    score: row.score,
+    winningTeamId: row.winning_team_id,
+    leagueId: row.league_id,
+    season: row.season,
+    dotaMatchId: row.dota_match_id,
+    diedFirstBlood: row.died_first_blood,
+    claimedFirstBlood: row.claimed_first_blood,
+    firstBloodMock: row.first_blood_mock,
+    firstBloodPraise: row.first_blood_praise,
+  };
+}
 
 export async function getAllMatches() {
   return await db.any(
