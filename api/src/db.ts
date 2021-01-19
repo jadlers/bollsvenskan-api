@@ -79,7 +79,13 @@ export function setUserEloRating(userId, newRating) {
 
 export function getNumberOfMatchesInLeague(userId, leagueId) {
   return db.one(
-    "SELECT COUNT(m.id) FROM matches m JOIN match_teams mt ON m.id = mt.match_id JOIN team_players tp ON mt.team_id = tp.team_id WHERE m.league_id = $2 AND user_id = $1",
+    `SELECT COUNT(m.id)
+     FROM matches m
+     JOIN match_teams mt ON m.id = mt.match_id
+     JOIN team_players tp ON mt.team_id = tp.team_id
+     WHERE m.league_id = $2
+       AND user_id = $1
+       AND NOT m.is_deleted`,
     [userId, leagueId]
   );
 }
@@ -114,10 +120,11 @@ export async function getUserMatches(
 ): Promise<{ matchId: number; leagueId: number; season: number }[]> {
   const res = await db.manyOrNone(
     `SELECT m.id, m.league_id, m.season
-        FROM matches m
-        JOIN match_teams mt ON m.id = mt.match_id
-        JOIN team_players tp ON mt.team_id = tp.team_id
-        WHERE user_id = $1`,
+     FROM matches m
+     JOIN match_teams mt ON m.id = mt.match_id
+     JOIN team_players tp ON mt.team_id = tp.team_id
+     WHERE user_id = $1
+       AND NOT is_deleted`,
     [userId]
   );
   const arr = res.map((match) => {
@@ -143,7 +150,8 @@ export async function getUserLeagueSeasons(
         JOIN match_teams mt ON m.id = mt.match_id
         JOIN team_players tp ON mt.team_id = tp.team_id
         WHERE user_id = $1
-        AND league_id = $2`,
+          AND league_id = $2
+          AND NOT is_deleted`,
     [userId, leagueId]
   );
   if (!rows) {
@@ -208,11 +216,16 @@ export async function addTeamToMatch(matchId, teamId) {
 /* MATCHES */
 
 export async function getAllMatches() {
-  return await db.any("SELECT * FROM matches WHERE league_id = 2");
+  return await db.any(
+    "SELECT * FROM matches WHERE league_id = 2 AND NOT is_deleted"
+  );
 }
 
 export async function getMatch(matchId: number) {
-  const row = await db.one("SELECT * FROM matches WHERE id = $1", matchId);
+  const row = await db.one(
+    "SELECT * FROM matches WHERE id = $1 AND NOT is_deleted",
+    matchId
+  );
   return {
     id: row.id as number,
     date: row.date as number,
@@ -345,9 +358,10 @@ export async function setUserEloRatingForMatch(matchId, userId, eloRating) {
 }
 
 export async function getMatchByDotaMatchId(dotaMatchId: number) {
-  return db.oneOrNone("SELECT * FROM matches WHERE dota_match_id = '$1'", [
-    dotaMatchId,
-  ]);
+  return db.oneOrNone(
+    "SELECT * FROM matches WHERE dota_match_id = '$1' AND NOT is_deleted",
+    [dotaMatchId]
+  );
 }
 
 export async function getMatchesMissingOpenDotaInfo() {
@@ -356,10 +370,12 @@ export async function getMatchesMissingOpenDotaInfo() {
     FROM matches m
     JOIN user_match_stats ums
       ON m.id = ums.match_id
-    WHERE league_id = 2 AND (
-      m.date IS NULL OR
-      ums.dota_hero_id IS NULL
-    )
+    WHERE league_id = 2
+      AND NOT is_deleted
+      AND (
+        m.date IS NULL OR
+        ums.dota_hero_id IS NULL
+      )
     ORDER BY m.id`);
   return rows.map((r) => r.id);
 }
@@ -399,14 +415,21 @@ export async function addNewTeam() {
 /* LEAGUES */
 
 export async function getAllMatchesFromLeague(leagueId) {
-  return await db.any("SELECT * FROM matches WHERE league_id = $1", [leagueId]);
+  return await db.any(
+    "SELECT * FROM matches WHERE league_id = $1 AND NOT is_deleted",
+    [leagueId]
+  );
 }
 
 export async function getLastDotaMatchIdFromLeague(leagueId) {
   return new Promise(async (resolve, reject) => {
     try {
       const rows = await db.any(
-        "SELECT dota_match_id FROM matches WHERE league_id = $1 ORDER BY dota_match_id",
+        `SELECT dota_match_id
+         FROM matches
+         WHERE league_id = $1
+           AND NOT is_deleted
+         ORDER BY dota_match_id`,
         [leagueId]
       );
       const matchIds = rows.map((row) => parseInt(row.dota_match_id));
@@ -417,6 +440,9 @@ export async function getLastDotaMatchIdFromLeague(leagueId) {
   });
 }
 
+// TODO: The temporary league should be deleted but for "real" leagues
+// `is_deleted` should be set to true. For now there is a block in the endpoint
+// handler.
 export async function deleteAllMatchesFromLeague(leagueId) {
   const rows = await db.any(
     "DELETE FROM matches WHERE league_id = $1 RETURNING *",
