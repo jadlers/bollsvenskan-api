@@ -1,7 +1,7 @@
-import socketIo from "socket.io";
+import { Server } from "socket.io";
 
 export default function addSocketIo(server) {
-  const io = socketIo(server);
+  const io = new Server(server);
 
   io.on("connection", (socket) => {
     console.log(`New client connected`);
