@@ -66,13 +66,14 @@ app.get("/dota/signup", async (_, res, next) => {
       format: "text",
     });
     const lines = signupDocument.split("\n");
-    const pollUrlRegex = /^\*[^~]+<(.+)>/;
+    const pollUrlRegex = /^[\*-][^~]+<(.+)>/;
 
     // Find the first line with a url that is not crossed out
     const linkLine = lines.find((line) => {
       let res = line.match(pollUrlRegex);
       return res !== null ? true : false;
     });
+
     const currentPollUrl = linkLine ? linkLine.match(pollUrlRegex)[1] : "";
 
     res.json({ signupDocumentUrl, currentPollUrl });
