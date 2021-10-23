@@ -4,7 +4,9 @@ import compression from "compression";
 import express from "express";
 import http from "http";
 import webdav from "webdav";
+import Joi from "@hapi/joi";
 
+import { isAuthorized } from "./auth.ts";
 import logger from "./middleware/logging";
 import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 
@@ -80,6 +82,71 @@ app.get("/dota/signup", async (_, res, next) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Could not get info from nextcloud" });
+  }
+});
+
+/**
+ * Updates the markdown file with links to the polls used for signup. The new
+ * link will be added to the top of the list and the previous will be crossed
+ * out.
+ *
+ * The `link` (link to new poll) and `date` (ISO date of game) properties are
+ * required. `week` is optional and will not be added if omitted.
+ */
+app.post("/dota/signup", isAuthorized, async (req, res, next) => {
+  // Validate data
+  const schema = Joi.object().keys({
+    date: Joi.date().required(),
+    link: Joi.string().required(),
+    week: Joi.number(),
+  });
+
+  const {
+    value: { date, link, week },
+    error,
+  } = schema.validate(req.body);
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return next();
+  }
+
+  try {
+    const file = await ncDotaSignupLinks.getFileContents("/", {
+      format: "text",
+    });
+    const lines = file.split("\n");
+    const pollUrlRegex = /^[\*-][^~]+<(.+)>/;
+
+    // Create new link list item
+    const weekStr = week ? `Vecka ${week} ` : "";
+    const year = date.getFullYear();
+    const datePart = `${year} (${date.getDate()}/${date.getMonth() + 1})`;
+    const newLinkLine = `* ${weekStr}${datePart}: <${link}>`;
+
+    // Find the first line with a url that is not crossed out
+    const linkLine = lines.findIndex((line) => {
+      let res = line.match(pollUrlRegex);
+      return res !== null ? true : false;
+    });
+
+    if (linkLine === -1) {
+      lines.push(newLinkLine);
+    } else {
+      const commentedLastLink = `* ~~${lines[linkLine].replace("* ", "")}~~`;
+      lines.splice(linkLine, 1, newLinkLine, commentedLastLink);
+    }
+
+    // Write new content to file
+    const written = await ncDotaSignupLinks.putFileContents(
+      "/",
+      lines.join("\n")
+    );
+    if (!written) throw new Error("Could not write to file.");
+
+    res.status(201).json({ message: "Signup link updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
