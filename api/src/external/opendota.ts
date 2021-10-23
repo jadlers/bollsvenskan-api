@@ -14,7 +14,7 @@ export async function getMatch(dotaMatchId: number): Promise<OpenDotaMatch> {
   url.searchParams.append("api_key", OPENDOTA_API_KEY);
   const res = await fetch(url.href);
   if (res.ok) {
-    const parsed: OpenDotaMatch = await res.json();
+    const parsed = (await res.json()) as OpenDotaMatch;
     return parsed;
   }
   return Promise.reject(await res.json());
