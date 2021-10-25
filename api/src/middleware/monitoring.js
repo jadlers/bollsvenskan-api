@@ -6,9 +6,10 @@ Prometheus.collectDefaultMetrics();
 /*
  * Use this endpoint to expose the data collected and hook up to grafana
  */
-export function monitoringEndpoint(_, res) {
+export async function monitoringEndpoint(_, res) {
   res.set("Content-Type", Prometheus.register.contentType);
-  res.end(Prometheus.register.metrics());
+  const metrics = await Prometheus.register.metrics();
+  res.end(metrics);
 }
 
 const httpRequestDurationMicroseconds = new Prometheus.Histogram({
