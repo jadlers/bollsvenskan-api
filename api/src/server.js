@@ -49,6 +49,11 @@ const ncDotaSignupLinks = webdav.createClient(
   { username: NEXTCLOUD.signupShareCode }
 );
 
+const ncDotaSignupEdit = webdav.createClient(
+  "https://nextcloud.jacobadlers.com/public.php/webdav",
+  { username: NEXTCLOUD.signupEditCode }
+);
+
 /**
  * Returns the url of the document with all poll links as well as the url to the
  * current poll.
@@ -94,6 +99,11 @@ app.get("/dota/signup", async (_, res, next) => {
  * required. `week` is optional and will not be added if omitted.
  */
 app.post("/dota/signup", isAuthorized, async (req, res, next) => {
+  if (!NEXTCLOUD.signupEditCode) {
+    res.status(501).json({ message: "Not configured by server" });
+    return next();
+  }
+
   // Validate data
   const schema = Joi.object().keys({
     date: Joi.date().required(),
@@ -111,7 +121,7 @@ app.post("/dota/signup", isAuthorized, async (req, res, next) => {
   }
 
   try {
-    const file = await ncDotaSignupLinks.getFileContents("/", {
+    const file = await ncDotaSignupEdit.getFileContents("/", {
       format: "text",
     });
     const lines = file.split("\n");
@@ -137,7 +147,7 @@ app.post("/dota/signup", isAuthorized, async (req, res, next) => {
     }
 
     // Write new content to file
-    const written = await ncDotaSignupLinks.putFileContents(
+    const written = await ncDotaSignupEdit.putFileContents(
       "/",
       lines.join("\n")
     );
