@@ -59,7 +59,7 @@ router.post("/", async (req, res, next) => {
   // Force the season to be 1 for the league 2 (Kung DotA)
   // TODO: Make required, for now this'll do
   if (leagueId === 2) {
-    season = 4;
+    season = 5;
   } else if (verifiedBody.season !== undefined) {
     season = verifiedBody.season;
   }
