@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16-alpine
 
 # Make it possible to set timezone with env var TZ
 RUN apk add --no-cache tzdata
