@@ -12,13 +12,12 @@ describe("Get player with steam32id", () => {
     expect(res.username).toEqual("Jacob");
   });
 
-  it("fetches non-existing player as standin", async (done) => {
+  it("fetches non-existing player as standin", async () => {
     const missingId = 123;
     try {
       await getPlayerBySteamId(missingId);
     } catch (err) {
       expect(err.message).toMatch(`No user`);
     }
-    done();
   });
 });

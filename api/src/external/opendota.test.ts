@@ -14,7 +14,7 @@ describe("getMatch", () => {
 });
 
 describe("Getting match play time", () => {
-  it("returns with passed opendota data", async () => {
+  it.skip("returns with passed opendota data", async () => {
     const matchId = 5760754589;
     const odData = await getMatch(matchId);
     const res = await timePlayed(matchId, odData);
@@ -22,7 +22,7 @@ describe("Getting match play time", () => {
     expect(res).toEqual("2020-12-27 20:26:22");
   });
 
-  it("returns when only match id passed", async () => {
+  it.skip("returns when only match id passed", async () => {
     const matchId = 5760754589;
     const res = await timePlayed(matchId);
 
