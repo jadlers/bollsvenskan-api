@@ -9,7 +9,6 @@ import monitoring, { monitoringEndpoint } from "./middleware/monitoring";
 
 // Import my other modules
 import { SERVER_PORT } from "./config.ts";
-import connectSocketIo from "./socketio.js";
 
 // Routes
 import matchRoutes from "./routes/matchRoutes.js";
@@ -19,7 +18,6 @@ import variousDotaRoutes from "./routes/variousDotaRoutes.ts";
 
 const app = express();
 let server = http.createServer(app);
-connectSocketIo(server);
 
 // Add middleware
 app.use(cors());
