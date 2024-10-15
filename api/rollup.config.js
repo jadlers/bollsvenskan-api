@@ -21,7 +21,6 @@ export default {
     "on-finished",
     "pg-promise",
     "prom-client",
-    "socket.io",
     "webdav",
   ],
 };
