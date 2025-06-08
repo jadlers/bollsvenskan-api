@@ -40,7 +40,7 @@ export async function recalculateEloRatingForAllPlayers() {
       const teams = await Promise.all(
         teamIds.map(async (teamId) => {
           return { id: teamId, playerIds: await db.getUsersInTeam(teamId) };
-        })
+        }),
       );
 
       const playersIdsInMatch = teams.map((team) => team.playerIds).flat();
@@ -49,7 +49,7 @@ export async function recalculateEloRatingForAllPlayers() {
       teams.forEach((team) => {
         const totalRating = team.playerIds.reduce((acc, playerId) => {
           const currentPlayerData = playerData.find(
-            (player) => player.id === playerId
+            (player) => player.id === playerId,
           );
           return acc + currentPlayerData.eloRating;
         }, 0);
@@ -67,28 +67,29 @@ export async function recalculateEloRatingForAllPlayers() {
               return;
             }
             const currentPlayerInfo = playerData.find(
-              (player) => player.id === playerId
+              (player) => player.id === playerId,
             );
             const eloRatingDiff = ratingDiff(
               team.averageEloRating,
               teams.filter((t) => t.id !== team.id)[0].averageEloRating,
               winner,
-              currentPlayerInfo.matchesPlayed
+              currentPlayerInfo.matchesPlayed,
             );
             currentPlayerInfo.eloRating += Math.round(eloRatingDiff);
             currentPlayerInfo.matchesPlayed++;
             await db.setUserEloRating(playerId, currentPlayerInfo.eloRating);
           });
-        })
+        }),
       );
 
       // DB: Add players current ELO to match in user_match_stats
       await Promise.all(
         playersIdsInMatch.map((playerId) => {
-          const currentElo = playerData.find((player) => player.id === playerId)
-            .eloRating;
+          const currentElo = playerData.find(
+            (player) => player.id === playerId,
+          ).eloRating;
           return db.setUserEloRatingForMatch(match.id, playerId, currentElo);
-        })
+        }),
       );
     }
 
