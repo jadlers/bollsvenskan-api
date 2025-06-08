@@ -40,7 +40,7 @@ router.get("/fb-phrase", async (_, res) => {
   }
 });
 
-router.post("/fb-phrase", async (req, res) => {
+router.post("/fb-phrase", async (req, res, next) => {
   // NOTE: The schema should always match the newPhraseRequestType
   const schema = Joi.object().keys({
     preName: Joi.string().allow("").required(),
@@ -59,36 +59,39 @@ router.post("/fb-phrase", async (req, res) => {
     );
 
     // Bad request, abort and give information about what has to change
-    return res.status(400).json({
+    res.status(400).json({
       ok: false,
       error: `${error.name}: ${errorInformation}`,
     });
+    return next();
   }
 
   // Data contains required fields
   const data: newPhraseRequestType = value;
   // Make sure at least one of pre/post-name is non-empty
   if (data.preName.trim() === "" && data.postName.trim() === "") {
-    return res.status(400).json({
+    res.status(400).json({
       ok: false,
       error: "Both 'preName' and 'postName' cannot be empty",
     });
+    return next();
   }
 
   const phrase = `${data.preName}<name>${data.postName}`;
 
   try {
     const id = await addNewFirstBloodPhrase(phrase, data.phraseType);
-    return res.status(201).json({
+    res.status(201).json({
       ok: true,
       message: `New ${data.phraseType} phrase added with id=${id}`,
     });
   } catch (err) {
     console.error("Error adding new FB phrase", err);
-    return res
+    res
       .status(500)
       .json({ ok: false, message: "Unexpected internal error, my bad!" });
   }
+  next();
 });
 
 export default router;
